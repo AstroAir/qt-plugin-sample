@@ -1,0 +1,388 @@
+/* Glass Theme for Advanced Plugin Manager */
+
+/* Main Window */
+QMainWindow {
+    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                                stop: 0 rgba(240, 248, 255, 0.9),
+                                stop: 0.5 rgba(230, 240, 250, 0.8),
+                                stop: 1 rgba(220, 235, 245, 0.9));
+    color: #2c3e50;
+    font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
+}
+
+/* Glass Effect Base */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Menu Bar */
+QMenuBar {
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 8px;
+    font-weight: 500;
+    backdrop-filter: blur(15px);
+}
+
+QMenuBar::item {
+    background-color: transparent;
+    padding: 12px 16px;
+    margin: 4px;
+    border-radius: 8px;
+    color: #34495e;
+}
+
+QMenuBar::item:selected {
+    background: rgba(52, 152, 219, 0.3);
+    color: #2980b9;
+    border: 1px solid rgba(52, 152, 219, 0.5);
+    backdrop-filter: blur(20px);
+}
+
+QMenuBar::item:pressed {
+    background: rgba(52, 152, 219, 0.5);
+    color: white;
+}
+
+/* Toolbar */
+QToolBar {
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    spacing: 8px;
+    padding: 12px;
+    border-radius: 16px;
+    margin: 8px;
+    backdrop-filter: blur(12px);
+}
+
+QToolButton {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 12px;
+    margin: 2px;
+    min-width: 40px;
+    min-height: 40px;
+    backdrop-filter: blur(8px);
+}
+
+QToolButton:hover {
+    background: rgba(52, 152, 219, 0.3);
+    border: 1px solid rgba(52, 152, 219, 0.5);
+    backdrop-filter: blur(15px);
+}
+
+QToolButton:pressed {
+    background: rgba(52, 152, 219, 0.5);
+    color: white;
+}
+
+/* Tab Widget */
+QTabWidget::pane {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    margin-top: 8px;
+    backdrop-filter: blur(10px);
+}
+
+QTabBar::tab {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: none;
+    padding: 12px 20px;
+    margin-right: 4px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    color: #5d6d7e;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+}
+
+QTabBar::tab:selected {
+    background: rgba(255, 255, 255, 0.4);
+    border-bottom: 3px solid #3498db;
+    color: #2980b9;
+    font-weight: 600;
+    backdrop-filter: blur(15px);
+}
+
+QTabBar::tab:hover:!selected {
+    background: rgba(255, 255, 255, 0.25);
+    color: #34495e;
+    backdrop-filter: blur(12px);
+}
+
+/* Glass Buttons */
+QPushButton {
+    background: rgba(52, 152, 219, 0.3);
+    color: #2980b9;
+    border: 1px solid rgba(52, 152, 219, 0.5);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    min-height: 20px;
+    backdrop-filter: blur(10px);
+}
+
+QPushButton:hover {
+    background: rgba(52, 152, 219, 0.4);
+    border: 1px solid rgba(52, 152, 219, 0.7);
+    backdrop-filter: blur(15px);
+}
+
+QPushButton:pressed {
+    background: rgba(52, 152, 219, 0.6);
+    color: white;
+}
+
+QPushButton:disabled {
+    background: rgba(189, 195, 199, 0.3);
+    color: #95a5a6;
+    border: 1px solid rgba(189, 195, 199, 0.5);
+}
+
+/* Glass Text Fields */
+QLineEdit {
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #2c3e50;
+    backdrop-filter: blur(8px);
+}
+
+QLineEdit:focus {
+    border: 2px solid rgba(52, 152, 219, 0.7);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+}
+
+/* Glass Text Area */
+QTextEdit {
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 14px;
+    color: #2c3e50;
+    backdrop-filter: blur(10px);
+}
+
+QTextEdit:focus {
+    border: 2px solid rgba(52, 152, 219, 0.7);
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(15px);
+}
+
+/* Glass Combo Box */
+QComboBox {
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 120px;
+    font-size: 14px;
+    color: #2c3e50;
+    backdrop-filter: blur(8px);
+}
+
+QComboBox:hover {
+    border: 1px solid rgba(52, 152, 219, 0.6);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 32px;
+}
+
+QComboBox::down-arrow {
+    image: url(:/icons/arrow-down-glass.svg);
+    width: 16px;
+    height: 16px;
+}
+
+QComboBox QAbstractItemView {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    selection-background-color: rgba(52, 152, 219, 0.3);
+    color: #2c3e50;
+    padding: 8px;
+    backdrop-filter: blur(15px);
+}
+
+/* Glass Progress Bar */
+QProgressBar {
+    background: rgba(236, 240, 241, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    text-align: center;
+    color: #2c3e50;
+    font-weight: 500;
+    height: 12px;
+    backdrop-filter: blur(5px);
+}
+
+QProgressBar::chunk {
+    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+                                stop: 0 rgba(52, 152, 219, 0.7),
+                                stop: 1 rgba(155, 89, 182, 0.7));
+    border-radius: 7px;
+    backdrop-filter: blur(8px);
+}
+
+/* Glass List Widget */
+QListWidget {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    selection-background-color: rgba(52, 152, 219, 0.3);
+    alternate-background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    backdrop-filter: blur(10px);
+}
+
+QListWidget::item {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    margin: 2px;
+    backdrop-filter: blur(5px);
+}
+
+QListWidget::item:selected {
+    background: rgba(52, 152, 219, 0.3);
+    color: #2980b9;
+    border: 1px solid rgba(52, 152, 219, 0.5);
+    backdrop-filter: blur(15px);
+}
+
+QListWidget::item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+}
+
+/* Glass Dock Widget */
+QDockWidget {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    titlebar-close-icon: url(:/icons/close-glass.svg);
+    titlebar-normal-icon: url(:/icons/float-glass.svg);
+    margin: 8px;
+    backdrop-filter: blur(12px);
+}
+
+QDockWidget::title {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #2c3e50;
+    backdrop-filter: blur(15px);
+}
+
+/* Glass Status Bar */
+QStatusBar {
+    background: rgba(248, 249, 250, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    color: #5d6d7e;
+    padding: 8px;
+    backdrop-filter: blur(8px);
+}
+
+/* Glass Splitter */
+QSplitter::handle {
+    background: rgba(52, 152, 219, 0.3);
+    border-radius: 3px;
+    backdrop-filter: blur(5px);
+}
+
+QSplitter::handle:horizontal {
+    width: 6px;
+}
+
+QSplitter::handle:vertical {
+    height: 6px;
+}
+
+QSplitter::handle:hover {
+    background: rgba(52, 152, 219, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+/* Glass Scroll Bar */
+QScrollBar:vertical {
+    background: rgba(255, 255, 255, 0.1);
+    width: 14px;
+    border-radius: 7px;
+    backdrop-filter: blur(5px);
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(52, 152, 219, 0.4);
+    border-radius: 7px;
+    min-height: 24px;
+    margin: 2px;
+    backdrop-filter: blur(8px);
+}
+
+QScrollBar::handle:vertical:hover {
+    background: rgba(52, 152, 219, 0.6);
+    backdrop-filter: blur(12px);
+}
+
+QScrollBar:horizontal {
+    background: rgba(255, 255, 255, 0.1);
+    height: 14px;
+    border-radius: 7px;
+    backdrop-filter: blur(5px);
+}
+
+QScrollBar::handle:horizontal {
+    background: rgba(52, 152, 219, 0.4);
+    border-radius: 7px;
+    min-width: 24px;
+    margin: 2px;
+    backdrop-filter: blur(8px);
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: rgba(52, 152, 219, 0.6);
+    backdrop-filter: blur(12px);
+}
+
+/* Glass Group Box */
+QGroupBox {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    margin-top: 12px;
+    padding-top: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    backdrop-filter: blur(8px);
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 16px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}

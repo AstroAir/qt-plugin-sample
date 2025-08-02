@@ -1,0 +1,171 @@
+{
+    "IID": "com.example.IPlugin/2.0",
+    "className": "ExampleUIPlugin",
+    "name": "Example UI Plugin",
+    "description": "Demonstrates various UI components and interactions including widgets, layouts, and user input handling",
+    "version": "1.2.0",
+    "author": "Plugin Framework Team",
+    "homepage": "https://example.com/ui-plugin",
+    "license": "MIT",
+    "category": "UI",
+    "capabilities": [
+        "UI",
+        "Configuration"
+    ],
+    "dependencies": [],
+    "optionalDependencies": [],
+    "conflicts": [],
+    "minimumHostVersion": "1.0.0",
+    "supportedPlatforms": ["Windows", "Linux", "macOS"],
+    "tags": ["demo", "ui", "widgets", "example", "tutorial"],
+    "screenshots": [
+        "screenshots/main-view.png",
+        "screenshots/calculator.png",
+        "screenshots/visualization.png",
+        "screenshots/settings.png"
+    ],
+    "documentation": {
+        "readme": "docs/README.md",
+        "api": "docs/API.md",
+        "examples": "docs/examples/"
+    },
+    "configuration": {
+        "theme": {
+            "type": "string",
+            "default": "Default",
+            "options": ["Default", "Dark", "Light", "Blue", "Green"],
+            "description": "Visual theme for the plugin interface"
+        },
+        "animationsEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable UI animations"
+        },
+        "updateInterval": {
+            "type": "integer",
+            "default": 1000,
+            "minimum": 100,
+            "maximum": 5000,
+            "description": "Update interval in milliseconds"
+        },
+        "maxItems": {
+            "type": "integer",
+            "default": 100,
+            "minimum": 10,
+            "maximum": 1000,
+            "description": "Maximum number of items to display"
+        },
+        "enableLogging": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable plugin logging"
+        },
+        "autoSave": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically save plugin state"
+        },
+        "opacity": {
+            "type": "integer",
+            "default": 100,
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Plugin interface opacity percentage"
+        }
+    },
+    "commands": [
+        {
+            "name": "getStatus",
+            "description": "Get current plugin status and state",
+            "parameters": [],
+            "returns": "object"
+        },
+        {
+            "name": "setProgress",
+            "description": "Set progress bar value",
+            "parameters": [
+                {
+                    "name": "value",
+                    "type": "integer",
+                    "description": "Progress value (0-100)"
+                }
+            ],
+            "returns": "boolean"
+        },
+        {
+            "name": "startTimer",
+            "description": "Start the plugin timer",
+            "parameters": [],
+            "returns": "boolean"
+        },
+        {
+            "name": "stopTimer",
+            "description": "Stop the plugin timer",
+            "parameters": [],
+            "returns": "boolean"
+        },
+        {
+            "name": "addListItem",
+            "description": "Add an item to the plugin list",
+            "parameters": [
+                {
+                    "name": "text",
+                    "type": "string",
+                    "description": "Text content for the new item"
+                }
+            ],
+            "returns": "boolean"
+        },
+        {
+            "name": "clearList",
+            "description": "Clear all items from the plugin list",
+            "parameters": [],
+            "returns": "boolean"
+        }
+    ],
+    "widgets": [
+        {
+            "type": "main",
+            "name": "Main Demo Widget",
+            "description": "Primary plugin interface with tabs and controls"
+        },
+        {
+            "type": "calculator",
+            "name": "Interactive Calculator",
+            "description": "Simple calculator demonstration"
+        },
+        {
+            "type": "visualization",
+            "name": "Data Visualization",
+            "description": "Data input and statistics visualization"
+        },
+        {
+            "type": "settings",
+            "name": "Plugin Settings",
+            "description": "Configuration interface for plugin settings"
+        }
+    ],
+    "permissions": [
+        "ui.create_widgets",
+        "ui.show_dialogs",
+        "storage.read_settings",
+        "storage.write_settings"
+    ],
+    "resources": {
+        "icons": {
+            "16x16": "icons/plugin-16.png",
+            "32x32": "icons/plugin-32.png",
+            "48x48": "icons/plugin-48.png"
+        },
+        "stylesheets": [
+            "styles/default.qss",
+            "styles/dark.qss"
+        ]
+    },
+    "buildInfo": {
+        "qtVersion": "6.0+",
+        "compiler": "C++17",
+        "buildDate": "2024-01-01",
+        "buildType": "Release"
+    }
+}

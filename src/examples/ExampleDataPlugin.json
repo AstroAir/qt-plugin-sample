@@ -1,0 +1,27 @@
+{
+    "IID": "com.example.IPlugin/2.0",
+    "className": "ExampleDataPlugin",
+    "name": "Example Data Plugin",
+    "description": "Demonstrates data processing, storage, and manipulation capabilities",
+    "version": "1.0.0",
+    "author": "Plugin Framework Team",
+    "uuid": "{11223344-5566-7788-99aa-bbccddeeff00}",
+    "category": "Data",
+    "homepage": "https://example.com/data-plugin",
+    "license": "MIT",
+    "capabilities": [
+        "Data",
+        "Storage",
+        "Processing"
+    ],
+    "interfaces": [
+        "IPlugin",
+        "IDataPlugin"
+    ],
+    "dependencies": [],
+    "metadata": {
+        "minQtVersion": "6.0.0",
+        "supportedPlatforms": ["Windows", "Linux", "macOS"],
+        "tags": ["data", "storage", "processing", "database"]
+    }
+}

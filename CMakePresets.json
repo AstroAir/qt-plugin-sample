@@ -1,0 +1,137 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default Config",
+            "description": "Default build using Ninja generator",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "description": "Debug build with all debugging symbols",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "BUILD_TESTING": "ON"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "description": "Release build with optimizations",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "vs2022",
+            "displayName": "Visual Studio 2022",
+            "description": "Visual Studio 2022 generator",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "xcode",
+            "displayName": "Xcode",
+            "description": "Xcode generator for macOS",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "mingw",
+            "displayName": "MinGW",
+            "description": "MinGW build for Windows",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "displayName": "Default Build"
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "displayName": "Debug Build"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "displayName": "Release Build"
+        },
+        {
+            "name": "vs2022",
+            "configurePreset": "vs2022",
+            "displayName": "Visual Studio 2022 Build"
+        },
+        {
+            "name": "xcode",
+            "configurePreset": "xcode",
+            "displayName": "Xcode Build"
+        },
+        {
+            "name": "mingw",
+            "configurePreset": "mingw",
+            "displayName": "MinGW Build"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default",
+            "configurePreset": "debug",
+            "displayName": "Default Tests",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ],
+    "packagePresets": [
+        {
+            "name": "default",
+            "configurePreset": "release",
+            "displayName": "Default Package"
+        }
+    ]
+}

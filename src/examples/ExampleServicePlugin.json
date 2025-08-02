@@ -1,0 +1,28 @@
+{
+    "IID": "com.example.IPlugin/2.0",
+    "className": "ExampleServicePlugin",
+    "name": "Example Service Plugin",
+    "description": "Demonstrates background service capabilities including task processing, file monitoring, and network operations",
+    "version": "1.1.0",
+    "author": "Plugin Framework Team",
+    "uuid": "{87654321-4321-8765-dcba-876543210fed}",
+    "category": "Service",
+    "homepage": "https://example.com/service-plugin",
+    "license": "MIT",
+    "capabilities": [
+        "Service",
+        "Threading",
+        "FileSystem",
+        "Network"
+    ],
+    "interfaces": [
+        "IPlugin",
+        "IServicePlugin"
+    ],
+    "dependencies": [],
+    "metadata": {
+        "minQtVersion": "6.0.0",
+        "supportedPlatforms": ["Windows", "Linux", "macOS"],
+        "tags": ["service", "background", "monitoring", "network"]
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "IID": "com.example.IPlugin/2.0",
+    "className": "ExampleNetworkPlugin",
+    "name": "Example Network Plugin",
+    "description": "Demonstrates network communication, HTTP requests, and API integration capabilities",
+    "version": "1.0.0",
+    "author": "Plugin Framework Team",
+    "uuid": "{aabbccdd-eeff-0011-2233-445566778899}",
+    "category": "Network",
+    "homepage": "https://example.com/network-plugin",
+    "license": "MIT",
+    "capabilities": [
+        "Network",
+        "HTTP",
+        "API"
+    ],
+    "interfaces": [
+        "IPlugin",
+        "INetworkPlugin"
+    ],
+    "dependencies": [],
+    "metadata": {
+        "minQtVersion": "6.0.0",
+        "supportedPlatforms": ["Windows", "Linux", "macOS"],
+        "tags": ["network", "http", "api", "communication"]
+    }
+}

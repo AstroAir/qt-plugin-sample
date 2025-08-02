@@ -1,0 +1,7 @@
+module components
+
+HeaderComponent 1.0 HeaderComponent.qml
+SearchFilterComponent 1.0 SearchFilterComponent.qml
+PluginListItem 1.0 PluginListItem.qml
+StatusBarComponent 1.0 StatusBarComponent.qml
+QuickActionsFooter 1.0 QuickActionsFooter.qml

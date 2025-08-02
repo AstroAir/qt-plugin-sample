@@ -1,0 +1,36 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>app.svg</file>
+        <file>dashboard.svg</file>
+        <file>plugins.svg</file>
+        <file>qml.svg</file>
+        <file>settings.svg</file>
+    </qresource>
+    <qresource prefix="/qml">
+        <file>../qml/PluginManagerView.qml</file>
+        <!-- Component files -->
+        <file>../qml/components/qmldir</file>
+        <file>../qml/components/HeaderComponent.qml</file>
+        <file>../qml/components/SearchFilterComponent.qml</file>
+        <file>../qml/components/PluginListItem.qml</file>
+        <file>../qml/components/StatusBarComponent.qml</file>
+        <file>../qml/components/QuickActionsFooter.qml</file>
+        <!-- Control files -->
+        <file>../qml/controls/qmldir</file>
+        <file>../qml/controls/CustomButton.qml</file>
+        <file>../qml/controls/AnimatedCard.qml</file>
+        <file>../qml/controls/StatusIndicator.qml</file>
+        <file>../qml/controls/SearchField.qml</file>
+        <file>../qml/controls/ThemeManager.qml</file>
+        <file>../qml/controls/LoadingIndicator.qml</file>
+    </qresource>
+    <qresource prefix="/styles">
+        <file>default.qss</file>
+        <file>dark-theme.qss</file>
+        <file>material-theme.qss</file>
+        <file>glass-theme.qss</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>background.png</file>
+    </qresource>
+</RCC>

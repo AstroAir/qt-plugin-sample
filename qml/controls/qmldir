@@ -1,0 +1,8 @@
+module controls
+
+CustomButton 1.0 CustomButton.qml
+AnimatedCard 1.0 AnimatedCard.qml
+StatusIndicator 1.0 StatusIndicator.qml
+SearchField 1.0 SearchField.qml
+ThemeManager 1.0 ThemeManager.qml
+LoadingIndicator 1.0 LoadingIndicator.qml
