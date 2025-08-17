@@ -255,31 +255,33 @@ SecurityValidationResult SecurityManager::validate_file_integrity(const std::fil
 
 SecurityValidationResult SecurityManager::validate_metadata(const std::filesystem::path& file_path) const {
     SecurityValidationResult result;
-    
+
     // This is a placeholder - in a real implementation, you would:
     // 1. Load the plugin metadata
     // 2. Validate required fields
     // 3. Check for suspicious metadata
     // 4. Validate version constraints
-    
+    (void)file_path; // Suppress unused parameter warning
+
     result.is_valid = true;
     return result;
 }
 
 SecurityValidationResult SecurityManager::validate_signature(const std::filesystem::path& file_path) const {
     SecurityValidationResult result;
-    
+
     // This is a placeholder - in a real implementation, you would:
     // 1. Check for digital signature
     // 2. Validate signature against trusted certificates
     // 3. Verify signature integrity
-    
+    (void)file_path; // Suppress unused parameter warning
+
     if (!m_signature_verification_enabled) {
         result.warnings.push_back("Signature verification is disabled");
         result.is_valid = true;
         return result;
     }
-    
+
     // For now, just warn that signature verification is not implemented
     result.warnings.push_back("Signature verification not fully implemented");
     result.is_valid = true;
@@ -288,12 +290,13 @@ SecurityValidationResult SecurityManager::validate_signature(const std::filesyst
 
 SecurityValidationResult SecurityManager::validate_permissions(const std::filesystem::path& file_path) const {
     SecurityValidationResult result;
-    
+
     // This is a placeholder - in a real implementation, you would:
     // 1. Check file permissions
     // 2. Validate plugin requested permissions
     // 3. Check for privilege escalation attempts
-    
+    (void)file_path; // Suppress unused parameter warning
+
     result.is_valid = true;
     return result;
 }

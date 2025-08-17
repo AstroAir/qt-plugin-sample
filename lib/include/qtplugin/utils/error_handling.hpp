@@ -113,6 +113,11 @@ enum class PluginErrorCode {
     CommandNotFound,
     InvalidParameters,
     StateError,
+    InvalidArgument,
+    NotFound,
+    ResourceUnavailable,
+    AlreadyExists,
+    NotImplemented,
     
     // Security errors
     SecurityViolation = 400,
@@ -173,7 +178,17 @@ public:
                 return "Invalid parameters";
             case PluginErrorCode::StateError:
                 return "Invalid plugin state";
-                
+            case PluginErrorCode::InvalidArgument:
+                return "Invalid argument";
+            case PluginErrorCode::NotFound:
+                return "Resource not found";
+            case PluginErrorCode::ResourceUnavailable:
+                return "Resource unavailable";
+            case PluginErrorCode::AlreadyExists:
+                return "Resource already exists";
+            case PluginErrorCode::NotImplemented:
+                return "Feature not implemented";
+
             // Security errors
             case PluginErrorCode::SecurityViolation:
                 return "Security violation";

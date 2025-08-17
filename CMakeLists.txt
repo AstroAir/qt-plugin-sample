@@ -180,6 +180,12 @@ endif()
 
 include(CPack)
 
+# Examples
+option(BUILD_EXAMPLES "Build examples" ON)
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
 # Development tools and testing
 option(BUILD_TESTING "Build tests" OFF)
 if(BUILD_TESTING)
@@ -205,6 +211,7 @@ message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Qt6 version: ${Qt6_VERSION}")
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "  Build examples: ${BUILD_EXAMPLES}")
 message(STATUS "  Build testing: ${BUILD_TESTING}")
 message(STATUS "  Build documentation: ${BUILD_DOCUMENTATION}")
 message(STATUS "")

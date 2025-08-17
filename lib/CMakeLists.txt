@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 # Optional components
-find_package(Qt6 COMPONENTS Network Widgets QUIET)
+find_package(Qt6 COMPONENTS Network Widgets Sql QUIET)
 
 # Library configuration options
 option(QTPLUGIN_BUILD_NETWORK "Build network plugin support" OFF)
@@ -52,6 +52,11 @@ set(QTPLUGIN_CORE_SOURCES
     src/communication/message_bus.cpp
     src/utils/version.cpp
     src/security/security_manager.cpp
+    src/managers/configuration_manager.cpp
+    src/managers/logging_manager.cpp
+    src/managers/resource_manager.cpp
+    src/managers/resource_lifecycle.cpp
+    src/managers/resource_monitor.cpp
 )
 
 # Core library headers
@@ -65,6 +70,17 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/utils/version.hpp
     include/qtplugin/utils/error_handling.hpp
     include/qtplugin/security/security_manager.hpp
+    include/qtplugin/managers/configuration_manager.hpp
+    include/qtplugin/managers/configuration_manager_impl.hpp
+    include/qtplugin/managers/logging_manager.hpp
+    include/qtplugin/managers/logging_manager_impl.hpp
+    include/qtplugin/managers/resource_manager.hpp
+    include/qtplugin/managers/resource_manager_impl.hpp
+    include/qtplugin/managers/resource_pools.hpp
+    include/qtplugin/managers/resource_lifecycle.hpp
+    include/qtplugin/managers/resource_lifecycle_impl.hpp
+    include/qtplugin/managers/resource_monitor.hpp
+    include/qtplugin/managers/resource_monitor_impl.hpp
     include/qtplugin/qtplugin.hpp
 )
 
@@ -89,11 +105,20 @@ target_include_directories(QtPluginCore
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Link Qt6 Core
+# Link Qt6 Core and optional components
 target_link_libraries(QtPluginCore
     PUBLIC
         Qt6::Core
 )
+
+# Link optional components if available
+if(Qt6Network_FOUND)
+    target_link_libraries(QtPluginCore PUBLIC Qt6::Network)
+endif()
+
+if(Qt6Sql_FOUND)
+    target_link_libraries(QtPluginCore PUBLIC Qt6::Sql)
+endif()
 
 # Enable Qt MOC for core library
 set_target_properties(QtPluginCore PROPERTIES

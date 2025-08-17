@@ -1,0 +1,39 @@
+{
+    "id": "configuration_example",
+    "name": "Configuration Example Plugin",
+    "description": "Demonstrates configuration management features including schemas, persistence, and scopes",
+    "version": "1.0.0",
+    "author": "QtPlugin Framework",
+    "license": "MIT",
+    "category": "Example",
+    "tags": ["configuration", "example", "demonstration"],
+    "dependencies": [],
+    "capabilities": [
+        "configuration_management",
+        "schema_validation",
+        "persistence",
+        "scoped_configuration",
+        "change_notifications"
+    ],
+    "configuration_schema": {
+        "type": "object",
+        "properties": {
+            "demo_interval": {
+                "type": "number",
+                "minimum": 1000,
+                "maximum": 10000,
+                "default": 3000,
+                "description": "Interval between demonstrations in milliseconds"
+            },
+            "auto_start_demo": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to automatically start demonstrations when plugin starts"
+            }
+        }
+    },
+    "default_configuration": {
+        "demo_interval": 3000,
+        "auto_start_demo": true
+    }
+}

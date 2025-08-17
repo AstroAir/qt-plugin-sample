@@ -107,7 +107,8 @@ MainWindow::~MainWindow() {
 
 void MainWindow::initializeComponents() {
     // **Initialize managers**
-    m_pluginManager = std::make_unique<qtplugin::PluginManager>(nullptr, nullptr, nullptr, this);
+    m_pluginManager = std::make_unique<qtplugin::PluginManager>(
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, this);
     m_pluginRegistry = std::make_unique<PluginRegistry>(this);
     m_themeManager = std::make_unique<ThemeManager>(this);
     m_securityManager = std::make_unique<SecurityManager>(this);
@@ -824,6 +825,11 @@ void MainWindow::loadSettings() {
     bool autoLoad = m_settings->value("autoLoad", true).toBool();
     bool hotReload = m_settings->value("hotReload", false).toBool();
     bool performanceMonitoring = m_settings->value("performanceMonitoring", true).toBool();
+
+    // Suppress unused variable warnings for now - these will be used when implementing the settings
+    (void)autoLoad;
+    (void)hotReload;
+    (void)performanceMonitoring;
     
     // TODO: Adapt to lib/ API - no direct auto-load setting, use load_all_plugins() instead
     // TODO: Hot reload is handled per-plugin in lib/ API

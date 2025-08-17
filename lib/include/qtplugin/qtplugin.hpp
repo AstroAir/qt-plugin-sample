@@ -40,6 +40,13 @@
 #include "communication/message_bus.hpp"
 #include "communication/message_types.hpp"
 
+// Managers
+#include "managers/configuration_manager.hpp"
+#include "managers/logging_manager.hpp"
+#include "managers/resource_manager.hpp"
+#include "managers/resource_lifecycle.hpp"
+#include "managers/resource_monitor.hpp"
+
 // Utilities
 #include "utils/version.hpp"
 #include "utils/error_handling.hpp"

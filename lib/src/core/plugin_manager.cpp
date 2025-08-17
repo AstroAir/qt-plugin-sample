@@ -8,6 +8,11 @@
 #include "../../include/qtplugin/core/plugin_loader.hpp"
 #include "../../include/qtplugin/communication/message_bus.hpp"
 #include "../../include/qtplugin/security/security_manager.hpp"
+#include "../../include/qtplugin/managers/configuration_manager_impl.hpp"
+#include "../../include/qtplugin/managers/logging_manager_impl.hpp"
+#include "../../include/qtplugin/managers/resource_manager_impl.hpp"
+#include "../../include/qtplugin/managers/resource_lifecycle_impl.hpp"
+#include "../../include/qtplugin/managers/resource_monitor_impl.hpp"
 #include <QTimer>
 #include <QFileSystemWatcher>
 #include <QJsonDocument>
@@ -51,11 +56,21 @@ QJsonObject PluginInfo::to_json() const {
 PluginManager::PluginManager(std::unique_ptr<IPluginLoader> loader,
                            std::unique_ptr<IMessageBus> message_bus,
                            std::unique_ptr<ISecurityManager> security_manager,
+                           std::unique_ptr<IConfigurationManager> configuration_manager,
+                           std::unique_ptr<ILoggingManager> logging_manager,
+                           std::unique_ptr<IResourceManager> resource_manager,
+                           std::unique_ptr<IResourceLifecycleManager> resource_lifecycle_manager,
+                           std::unique_ptr<IResourceMonitor> resource_monitor,
                            QObject* parent)
     : QObject(parent)
     , m_loader(loader ? std::move(loader) : PluginLoaderFactory::create_default_loader())
     , m_message_bus(message_bus ? std::move(message_bus) : std::make_unique<MessageBus>())
     , m_security_manager(security_manager ? std::move(security_manager) : SecurityManagerFactory::create_default())
+    , m_configuration_manager(configuration_manager ? std::move(configuration_manager) : create_configuration_manager(this))
+    , m_logging_manager(logging_manager ? std::move(logging_manager) : create_logging_manager(this))
+    , m_resource_manager(resource_manager ? std::move(resource_manager) : create_resource_manager(this))
+    , m_resource_lifecycle_manager(resource_lifecycle_manager ? std::move(resource_lifecycle_manager) : create_resource_lifecycle_manager(this))
+    , m_resource_monitor(resource_monitor ? std::move(resource_monitor) : create_resource_monitor(this))
     , m_file_watcher(std::make_unique<QFileSystemWatcher>(this))
     , m_monitoring_timer(std::make_unique<QTimer>(this))
 {
@@ -315,9 +330,11 @@ void PluginManager::on_file_changed(const QString& path) {
     for (const auto& [id, info] : m_plugins) {
         if (info->file_path.string() == file_path && info->hot_reload_enabled) {
             // Reload plugin asynchronously
-            std::async(std::launch::async, [this, id]() {
+            auto future = std::async(std::launch::async, [this, id]() {
                 reload_plugin(id, true);
             });
+            // Future will be destroyed when it goes out of scope, which is fine for fire-and-forget
+            (void)future; // Suppress unused variable warning
             break;
         }
     }
@@ -345,6 +362,7 @@ qtplugin::expected<void, PluginError> PluginManager::validate_plugin_file(const 
 qtplugin::expected<void, PluginError> PluginManager::check_plugin_dependencies(const PluginInfo& info) const {
     // This is a simplified implementation
     // In a real system, you would check if all dependencies are loaded and compatible
+    (void)info; // Suppress unused parameter warning
     return make_success();
 }
 
@@ -564,6 +582,26 @@ QJsonObject PluginManager::get_plugin_configuration(std::string_view plugin_id) 
     }
 
     return it->second->configuration;
+}
+
+IConfigurationManager& PluginManager::configuration_manager() const {
+    return *m_configuration_manager;
+}
+
+ILoggingManager& PluginManager::logging_manager() const {
+    return *m_logging_manager;
+}
+
+IResourceManager& PluginManager::resource_manager() const {
+    return *m_resource_manager;
+}
+
+IResourceLifecycleManager& PluginManager::resource_lifecycle_manager() const {
+    return *m_resource_lifecycle_manager;
+}
+
+IResourceMonitor& PluginManager::resource_monitor() const {
+    return *m_resource_monitor;
 }
 
 } // namespace qtplugin

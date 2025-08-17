@@ -10,6 +10,7 @@
 #include "plugin_loader.hpp"
 #include "../communication/message_bus.hpp"
 #include "../security/security_manager.hpp"
+#include "../managers/configuration_manager.hpp"
 #include "../utils/error_handling.hpp"
 #include "../utils/concepts.hpp"
 #include <QObject>
@@ -38,6 +39,11 @@ namespace qtplugin {
 class IPluginLoader;
 class IMessageBus;
 class ISecurityManager;
+class IConfigurationManager;
+class ILoggingManager;
+class IResourceManager;
+class IResourceLifecycleManager;
+class IResourceMonitor;
 
 /**
  * @brief Plugin loading options
@@ -100,11 +106,21 @@ public:
      * @param loader Custom plugin loader (optional)
      * @param message_bus Custom message bus (optional)
      * @param security_manager Custom security manager (optional)
+     * @param configuration_manager Custom configuration manager (optional)
+     * @param logging_manager Custom logging manager (optional)
+     * @param resource_manager Custom resource manager (optional)
+     * @param resource_lifecycle_manager Custom resource lifecycle manager (optional)
+     * @param resource_monitor Custom resource monitor (optional)
      * @param parent Parent QObject (optional)
      */
     explicit PluginManager(std::unique_ptr<IPluginLoader> loader = nullptr,
                           std::unique_ptr<IMessageBus> message_bus = nullptr,
                           std::unique_ptr<ISecurityManager> security_manager = nullptr,
+                          std::unique_ptr<IConfigurationManager> configuration_manager = nullptr,
+                          std::unique_ptr<ILoggingManager> logging_manager = nullptr,
+                          std::unique_ptr<IResourceManager> resource_manager = nullptr,
+                          std::unique_ptr<IResourceLifecycleManager> resource_lifecycle_manager = nullptr,
+                          std::unique_ptr<IResourceMonitor> resource_monitor = nullptr,
                           QObject* parent = nullptr);
     
     /**
@@ -358,7 +374,37 @@ public:
      * @return Success or error information
      */
     qtplugin::expected<void, PluginError> load_configurations(const std::filesystem::path& file_path);
-    
+
+    /**
+     * @brief Get configuration manager
+     * @return Reference to configuration manager
+     */
+    IConfigurationManager& configuration_manager() const;
+
+    /**
+     * @brief Get logging manager
+     * @return Reference to logging manager
+     */
+    ILoggingManager& logging_manager() const;
+
+    /**
+     * @brief Get resource manager
+     * @return Reference to resource manager
+     */
+    IResourceManager& resource_manager() const;
+
+    /**
+     * @brief Get resource lifecycle manager
+     * @return Reference to resource lifecycle manager
+     */
+    IResourceLifecycleManager& resource_lifecycle_manager() const;
+
+    /**
+     * @brief Get resource monitor
+     * @return Reference to resource monitor
+     */
+    IResourceMonitor& resource_monitor() const;
+
     // === Communication ===
     
     /**
@@ -483,6 +529,11 @@ private:
     std::unique_ptr<IPluginLoader> m_loader;
     std::unique_ptr<IMessageBus> m_message_bus;
     std::unique_ptr<ISecurityManager> m_security_manager;
+    std::unique_ptr<IConfigurationManager> m_configuration_manager;
+    std::unique_ptr<ILoggingManager> m_logging_manager;
+    std::unique_ptr<IResourceManager> m_resource_manager;
+    std::unique_ptr<IResourceLifecycleManager> m_resource_lifecycle_manager;
+    std::unique_ptr<IResourceMonitor> m_resource_monitor;
     
     // Plugin storage
     mutable std::shared_mutex m_plugins_mutex;
