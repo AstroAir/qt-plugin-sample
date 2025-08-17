@@ -38,7 +38,7 @@
 #include <QDateTimeAxis>
 #endif
 
-class PluginManager;
+namespace qtplugin { class PluginManager; }
 class PluginRegistry;
 class MetricsCard;
 class ActivityLog;
@@ -57,7 +57,7 @@ public:
     explicit DashboardWidget(QWidget* parent = nullptr);
     ~DashboardWidget() override;
 
-    void setPluginManager(PluginManager* manager);
+    void setPluginManager(qtplugin::PluginManager* manager);
     void setPluginRegistry(PluginRegistry* registry);
 
 public slots:
@@ -86,7 +86,7 @@ private:
     void connectSignals();
     void updateAllComponents();
 
-    PluginManager* m_pluginManager = nullptr;
+    qtplugin::PluginManager* m_pluginManager = nullptr;
     PluginRegistry* m_pluginRegistry = nullptr;
 
     // UI Components

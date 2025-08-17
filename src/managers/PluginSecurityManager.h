@@ -5,7 +5,8 @@
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
-#include "../core/PluginInterface.h"
+#include <qtplugin/qtplugin.hpp>
+#include <qtplugin/security/security_manager.hpp>
 
 class PluginSecurityManager : public QObject {
     Q_OBJECT
@@ -16,7 +17,7 @@ public:
     bool validateSignature(const QString& filePath) const;
     bool checkPermissions(const QString& pluginName, const QStringList& permissions) const;
     void applySandbox(const QString& pluginName);
-    SecurityLevel evaluateSecurityLevel(const QString& filePath) const;
+    qtplugin::SecurityLevel evaluateSecurityLevel(const QString& filePath) const;
     
     void addTrustedPublisher(const QString& publisher);
     void removeTrustedPublisher(const QString& publisher);

@@ -54,7 +54,7 @@ struct RibbonMainWindow::RibbonMainWindowPrivate {
     RibbonStatusBar* statusBar = nullptr;
     
     // Plugin system integration
-    PluginManager* pluginManager = nullptr;
+    qtplugin::PluginManager* pluginManager = nullptr;
     ApplicationManager* applicationManager = nullptr;
     
     // Main widgets
@@ -128,7 +128,7 @@ RibbonBar* RibbonMainWindow::ribbonBar() const {
     return d->ribbonBar;
 }
 
-void RibbonMainWindow::setPluginManager(PluginManager* manager) {
+void RibbonMainWindow::setPluginManager(qtplugin::PluginManager* manager) {
     if (d->pluginManager == manager) {
         return;
     }
@@ -142,11 +142,11 @@ void RibbonMainWindow::setPluginManager(PluginManager* manager) {
     
     // Connect new manager
     if (d->pluginManager) {
-        connect(d->pluginManager, &PluginManager::pluginLoaded,
+        connect(d->pluginManager, &qtplugin::PluginManager::plugin_loaded,
                 this, &RibbonMainWindow::onPluginLoaded);
-        connect(d->pluginManager, &PluginManager::pluginUnloaded,
+        connect(d->pluginManager, &qtplugin::PluginManager::plugin_unloaded,
                 this, &RibbonMainWindow::onPluginUnloaded);
-        connect(d->pluginManager, &PluginManager::pluginError,
+        connect(d->pluginManager, &qtplugin::PluginManager::plugin_error,
                 this, &RibbonMainWindow::onPluginError);
         
         // Update UI components
@@ -163,7 +163,7 @@ void RibbonMainWindow::setPluginManager(PluginManager* manager) {
     qCInfo(ribbonMainWindow) << "Plugin manager set";
 }
 
-PluginManager* RibbonMainWindow::pluginManager() const {
+qtplugin::PluginManager* RibbonMainWindow::pluginManager() const {
     return d->pluginManager;
 }
 
@@ -332,8 +332,8 @@ void RibbonMainWindow::openPlugin() {
         "Plugin Files (*.so *.dll *.dylib);;All Files (*)");
     
     if (!fileName.isEmpty() && d->pluginManager) {
-        auto result = d->pluginManager->loadPlugin(fileName);
-        if (result == PluginManager::LoadResult::Success) {
+        auto result = d->pluginManager->load_plugin(std::filesystem::path(fileName.toStdString()));
+        if (result) {
             showStatusMessage("Plugin loaded: " + QFileInfo(fileName).baseName(), 3000);
         } else {
             QMessageBox::warning(this, "Plugin Error", "Failed to load plugin: " + fileName);
@@ -472,7 +472,7 @@ void RibbonMainWindow::onPluginLoaded(const QString& pluginId) {
 
     if (d->statusBar) {
         // Update plugin count in status bar
-        int pluginCount = d->pluginManager ? d->pluginManager->loadedPlugins().size() : 0;
+        int pluginCount = d->pluginManager ? d->pluginManager->all_plugin_info().size() : 0;
         d->statusBar->setPluginCount(pluginCount);
     }
 
@@ -484,7 +484,7 @@ void RibbonMainWindow::onPluginUnloaded(const QString& pluginId) {
     updatePluginActions();
 
     if (d->statusBar) {
-        int pluginCount = d->pluginManager ? d->pluginManager->loadedPlugins().size() : 0;
+        int pluginCount = d->pluginManager ? d->pluginManager->all_plugin_info().size() : 0;
         d->statusBar->setPluginCount(pluginCount);
     }
 
@@ -990,7 +990,7 @@ QAction* createRibbonAction(const QString& text, const QString& icon, const QStr
     return action;
 }
 
-void connectPluginAction(QAction* action, PluginManager* pluginManager, const QString& pluginId, const QString& actionName) {
+void connectPluginAction(QAction* action, qtplugin::PluginManager* pluginManager, const QString& pluginId, const QString& actionName) {
     if (!action || !pluginManager) {
         return;
     }
@@ -1073,7 +1073,7 @@ QIcon createThemedIcon(const QString& lightIcon, const QString& darkIcon, Ribbon
     }
 }
 
-void setupPluginManagementRibbon(RibbonBar* ribbon, PluginManager* pluginManager) {
+void setupPluginManagementRibbon(RibbonBar* ribbon, qtplugin::PluginManager* pluginManager) {
     Q_UNUSED(ribbon)
     Q_UNUSED(pluginManager)
     // TODO: Implement plugin management ribbon setup

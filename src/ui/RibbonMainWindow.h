@@ -2,7 +2,7 @@
 #pragma once
 
 #include "RibbonInterface.h"
-#include "../core/PluginManager.h"
+#include <qtplugin/qtplugin.hpp>
 #include "../managers/ApplicationManager.h"
 #include "../managers/ThemeManager.h"
 #include "../utils/PluginTemplateGenerator.h"
@@ -40,6 +40,7 @@
 #include <memory>
 
 // Forward declarations
+namespace qtplugin { class PluginManager; }
 class PluginDashboard;
 class PluginExplorer;
 class PluginEditor;
@@ -59,8 +60,8 @@ public:
     RibbonBar* ribbonBar() const;
     
     // Plugin management integration
-    void setPluginManager(PluginManager* manager);
-    PluginManager* pluginManager() const;
+    void setPluginManager(qtplugin::PluginManager* manager);
+    qtplugin::PluginManager* pluginManager() const;
     
     // Application manager integration
     void setApplicationManager(ApplicationManager* manager);
@@ -181,7 +182,7 @@ public:
     ~PluginDashboard() override;
 
     // Dashboard management
-    void setPluginManager(PluginManager* manager);
+    void setPluginManager(qtplugin::PluginManager* manager);
     void refreshDashboard();
     void addDashboardWidget(const QString& title, QWidget* widget);
     void removeDashboardWidget(const QString& title);
@@ -210,7 +211,7 @@ public:
     ~PluginExplorer() override;
 
     // Explorer management
-    void setPluginManager(PluginManager* manager);
+    void setPluginManager(qtplugin::PluginManager* manager);
     void refreshExplorer();
     void setCurrentPlugin(const QString& pluginId);
     QString currentPlugin() const;
@@ -368,14 +369,14 @@ private:
 // Utility functions for ribbon integration
 namespace RibbonIntegration {
     // Ribbon setup helpers
-    void setupPluginManagementRibbon(RibbonBar* ribbon, PluginManager* pluginManager);
+    void setupPluginManagementRibbon(RibbonBar* ribbon, qtplugin::PluginManager* pluginManager);
     void setupDevelopmentToolsRibbon(RibbonBar* ribbon);
     void setupViewRibbon(RibbonBar* ribbon, QMainWindow* mainWindow);
     void setupHelpRibbon(RibbonBar* ribbon);
     
     // Action helpers
     QAction* createRibbonAction(const QString& text, const QString& icon, const QString& tooltip, QObject* parent);
-    void connectPluginAction(QAction* action, PluginManager* pluginManager, const QString& pluginId, const QString& actionName);
+    void connectPluginAction(QAction* action, qtplugin::PluginManager* pluginManager, const QString& pluginId, const QString& actionName);
     
     // Theme helpers
     void applyRibbonThemeToApplication(RibbonTheme theme);

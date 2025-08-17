@@ -1,8 +1,8 @@
 // ExampleUIPlugin.h - Example UI Plugin demonstrating widget creation
 #pragma once
 
-#include "../core/PluginInterface.h"
-#include "../core/AdvancedInterfaces.h"
+#include <qtplugin/qtplugin.hpp>
+#include <qtplugin/ui/ui_plugin_interface.hpp>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -24,47 +24,44 @@
 #include <QUuid>
 #include <QVersionNumber>
 
-class ExampleUIPlugin : public QObject, public IUIPlugin
+class ExampleUIPlugin : public QObject, public qtplugin::IUIPlugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "com.example.IPlugin/2.0" FILE "ExampleUIPlugin.json")
-    Q_INTERFACES(IPlugin IUIPlugin)
+    Q_PLUGIN_METADATA(IID "qtplugin.IUIPlugin/3.0" FILE "ExampleUIPlugin.json")
+    Q_INTERFACES(qtplugin::IPlugin qtplugin::IUIPlugin)
 
 public:
     ExampleUIPlugin(QObject* parent = nullptr);
     ~ExampleUIPlugin() override;
 
     // IPlugin interface
-    QString name() const override { return "Example UI Plugin"; }
-    QString description() const override { return "Demonstrates various UI components and interactions"; }
-    QVersionNumber version() const override { return QVersionNumber(1, 2, 0); }
-    QString author() const override { return "Plugin Framework Team"; }
-    QUuid uuid() const override { return QUuid("{12345678-1234-5678-9abc-123456789abc}"); }
-    QString category() const override { return "UI"; }
-    QString homepage() const override { return "https://example.com/ui-plugin"; }
-    QString license() const override { return "MIT"; }
+    std::string id() const noexcept override { return "example-ui-plugin"; }
+    std::string_view name() const noexcept override { return "Example UI Plugin"; }
+    std::string_view description() const noexcept override { return "Demonstrates various UI components and interactions"; }
+    qtplugin::Version version() const noexcept override { return qtplugin::Version{1, 2, 0}; }
+    std::string_view author() const noexcept override { return "Plugin Framework Team"; }
+    QUuid uuid() const noexcept override { return QUuid("{12345678-1234-5678-9abc-123456789abc}"); }
+    std::string_view category() const noexcept override { return "UI"; }
+    std::string_view homepage() const noexcept override { return "https://example.com/ui-plugin"; }
+    std::string_view license() const noexcept override { return "MIT"; }
+    qtplugin::PluginCapabilities capabilities() const noexcept override;
 
-    PluginCapabilities capabilities() const override {
-        return PluginCapability::UI | PluginCapability::Configuration;
-    }
-
-    bool initialize() override;
-    void cleanup() override;
-    bool isInitialized() const override { return m_initialized; }
-    PluginStatus status() const override { return m_status; }
+    qtplugin::expected<void, qtplugin::PluginError> initialize() override;
+    void shutdown() noexcept override;
+    qtplugin::PluginState state() const noexcept override { return m_state; }
 
     // Configuration
-    QJsonObject defaultConfiguration() const override;
-    bool configure(const QJsonObject& config) override;
-    QJsonObject currentConfiguration() const override;
+    std::optional<QJsonObject> default_configuration() const override;
+    qtplugin::expected<void, qtplugin::PluginError> configure(const QJsonObject& config) override;
+    QJsonObject current_configuration() const override;
 
     // IUIPlugin interface
-    std::unique_ptr<QWidget> createWidget(QWidget* parent = nullptr) override;
-    QWidget* createConfigurationWidget(QWidget* parent = nullptr) override;
+    std::unique_ptr<QWidget> create_widget(QWidget* parent = nullptr) override;
+    std::unique_ptr<QWidget> create_configuration_widget(QWidget* parent = nullptr) override;
 
     // Commands
-    QVariant executeCommand(const QString& command, const QVariantMap& params = {}) override;
-    QStringList availableCommands() const override;
+    qtplugin::expected<QJsonObject, qtplugin::PluginError> execute_command(std::string_view command, const QJsonObject& params = {}) override;
+    std::vector<std::string> available_commands() const override;
 
 private slots:
     void onButtonClicked();
@@ -81,7 +78,7 @@ private:
     void loadWidgetState();
 
     bool m_initialized = false;
-    PluginStatus m_status = PluginStatus::Unknown;
+    qtplugin::PluginState m_state = qtplugin::PluginState::Unloaded;
     QJsonObject m_configuration;
     
     // Demo widget components

@@ -1,6 +1,6 @@
 // MainWindow.cpp - Complete implementation
 #include "MainWindow.h"
-#include "../core/PluginManager.h"
+#include <qtplugin/qtplugin.hpp>
 #include "../core/PluginRegistry.h"
 #include "../managers/ThemeManager.h"
 #include "PluginWidgets.h"
@@ -107,7 +107,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::initializeComponents() {
     // **Initialize managers**
-    m_pluginManager = std::make_unique<PluginManager>(this);
+    m_pluginManager = std::make_unique<qtplugin::PluginManager>(nullptr, nullptr, nullptr, this);
     m_pluginRegistry = std::make_unique<PluginRegistry>(this);
     m_themeManager = std::make_unique<ThemeManager>(this);
     m_securityManager = std::make_unique<SecurityManager>(this);
@@ -755,14 +755,13 @@ QWidget* MainWindow::createPluginManagerWidget() {
 
 void MainWindow::setupConnections() {
     // **Plugin Manager connections**
-    connect(m_pluginManager.get(), &PluginManager::pluginLoaded, 
+    connect(m_pluginManager.get(), &qtplugin::PluginManager::plugin_loaded,
             this, &MainWindow::onPluginLoaded);
-    connect(m_pluginManager.get(), &PluginManager::pluginUnloaded, 
+    connect(m_pluginManager.get(), &qtplugin::PluginManager::plugin_unloaded,
             this, &MainWindow::onPluginUnloaded);
-    connect(m_pluginManager.get(), &PluginManager::pluginError, 
+    connect(m_pluginManager.get(), &qtplugin::PluginManager::plugin_error,
             this, &MainWindow::onPluginError);
-    connect(m_pluginManager.get(), &PluginManager::pluginCountChanged, 
-            this, &MainWindow::updateStatusBar);
+    // Note: plugin_count_changed signal not available in lib, will need to track manually
     
     // **Theme Manager connections**
     connect(m_themeManager.get(), &ThemeManager::currentThemeChanged,
@@ -826,10 +825,10 @@ void MainWindow::loadSettings() {
     bool hotReload = m_settings->value("hotReload", false).toBool();
     bool performanceMonitoring = m_settings->value("performanceMonitoring", true).toBool();
     
-    m_pluginManager->setAutoLoadEnabled(autoLoad);
-    m_pluginManager->setHotReloadEnabled(hotReload);
+    // TODO: Adapt to lib/ API - no direct auto-load setting, use load_all_plugins() instead
+    // TODO: Hot reload is handled per-plugin in lib/ API
     if (performanceMonitoring) {
-        m_pluginManager->startPerformanceMonitoring();
+        m_pluginManager->start_monitoring();
     }
     
     m_settings->endGroup();
@@ -842,14 +841,17 @@ void MainWindow::saveSettings() {
     m_settings->setValue("state", saveState());
     m_settings->setValue("theme", m_currentTheme);
     m_settings->setValue("recentFiles", m_recentFiles);
-    m_settings->setValue("pluginPath", m_pluginManager->pluginSearchPaths());
+    // TODO: Convert search_paths() to QStringList
+    // auto paths = m_pluginManager->search_paths();
+    // m_settings->setValue("pluginPath", /* convert paths to QStringList */);
     
     m_settings->endGroup();
     
     m_settings->beginGroup("PluginManager");
-    m_settings->setValue("autoLoad", m_pluginManager->autoLoadEnabled());
-    m_settings->setValue("hotReload", m_pluginManager->hotReloadEnabled());
-    m_settings->setValue("performanceMonitoring", m_pluginManager->isPerformanceMonitoringEnabled());
+    // TODO: Adapt to lib/ API - these settings are handled differently
+    m_settings->setValue("autoLoad", true);  // Default value
+    m_settings->setValue("hotReload", false);  // Default value
+    m_settings->setValue("performanceMonitoring", m_pluginManager->is_monitoring_active());
     m_settings->endGroup();
     
     m_settings->sync();
@@ -956,10 +958,12 @@ void MainWindow::dropEvent(QDropEvent* event) {
                 QRegularExpression pluginRegex("\\.(dll|so|dylib)$", QRegularExpression::CaseInsensitiveOption);
                 if (pluginRegex.match(fileInfo.fileName()).hasMatch()) {
                     // **Install plugin**
-                    auto result = m_pluginManager->loadPlugin(filePath);
-                    if (result != PluginManager::LoadResult::Success) {
+                    auto result = m_pluginManager->load_plugin(std::filesystem::path(filePath.toStdString()));
+                    if (!result) {
                         QMessageBox::warning(this, tr("Plugin Installation Failed"),
-                                           tr("Failed to install plugin: %1").arg(filePath));
+                                           tr("Failed to install plugin: %1\nError: %2")
+                                           .arg(filePath)
+                                           .arg(QString::fromStdString(result.error().message)));
                     }
                 }
             }
@@ -1262,7 +1266,7 @@ void MainWindow::setPluginManagerVisible(bool visible) {
 
 void MainWindow::setPluginPath(const QString& path) {
     if (m_pluginManager) {
-        m_pluginManager->addPluginSearchPath(path);
+        m_pluginManager->add_search_path(std::filesystem::path(path.toStdString()));
         emit pluginPathChanged(path);
         showStatusMessage(tr("Plugin path set to: %1").arg(path));
     }
@@ -1270,15 +1274,19 @@ void MainWindow::setPluginPath(const QString& path) {
 
 void MainWindow::loadPluginsFromPath(const QString& path) {
     if (m_pluginManager) {
-        m_pluginManager->addPluginSearchPath(path);
-        m_pluginManager->scanDirectory(path);
+        m_pluginManager->add_search_path(std::filesystem::path(path.toStdString()));
+        // Use discover_plugins and then load_all_plugins instead of scanDirectory
+        auto discovered = m_pluginManager->discover_plugins(std::filesystem::path(path.toStdString()), true);
+        m_pluginManager->load_all_plugins();
         showStatusMessage(tr("Loading plugins from: %1").arg(path));
     }
 }
 
 void MainWindow::refreshPluginList() {
     if (m_pluginManager) {
-        m_pluginManager->refreshPluginList();
+        // TODO: Implement refresh functionality using lib/ API
+        // Could reload all plugins or rediscover from search paths
+        m_pluginManager->load_all_plugins();
         showStatusMessage(tr("Plugin list refreshed"));
     }
 }
@@ -1323,9 +1331,9 @@ void MainWindow::setupPluginIntegration() {
     // Setup plugin integration
     if (m_pluginManager && m_pluginRegistry) {
         // Connect public signals to public slots instead
-        connect(m_pluginManager.get(), &PluginManager::pluginLoaded,
+        connect(m_pluginManager.get(), &qtplugin::PluginManager::plugin_loaded,
                 this, &MainWindow::onPluginLoaded);
-        connect(m_pluginManager.get(), &PluginManager::pluginUnloaded,
+        connect(m_pluginManager.get(), &qtplugin::PluginManager::plugin_unloaded,
                 this, &MainWindow::onPluginUnloaded);
     }
 }
@@ -1333,7 +1341,7 @@ void MainWindow::setupPluginIntegration() {
 void MainWindow::setupPerformanceMonitoring() {
     if (m_performanceTimer && m_pluginManager) {
         connect(m_performanceTimer, &QTimer::timeout, [this]() {
-            if (m_pluginManager->isPerformanceMonitoringEnabled()) {
+            if (m_pluginManager->is_monitoring_active()) {
                 // Update performance metrics
                 updateStatusBar();
             }

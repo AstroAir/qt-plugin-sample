@@ -121,6 +121,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Add subdirectories
+add_subdirectory(lib)
 add_subdirectory(src)
 
 # Installation configuration

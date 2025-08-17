@@ -12,9 +12,7 @@ set(SOURCES
     ui/RibbonControls.cpp
     ui/RibbonMainWindow.cpp
     # Core Plugin System
-    core/PluginManager.cpp
     core/PluginRegistry.cpp
-    core/PluginCommunicationBus.cpp
     # Managers
     managers/ApplicationManager.cpp
     managers/PluginSecurityManager.cpp
@@ -59,11 +57,7 @@ set(HEADERS
     ui/RibbonMainWindow.h
     ui/RibbonCustomization.h
     # Core Plugin System
-    core/PluginInterface.h
-    core/AdvancedInterfaces.h
-    core/PluginManager.h
     core/PluginRegistry.h
-    core/PluginCommunicationBus.h
     # Managers
     managers/ApplicationManager.h
     managers/PluginSecurityManager.h
@@ -102,7 +96,7 @@ set(RESOURCES
 # Create the main executable
 add_executable(AdvancedPluginManager ${SOURCES} ${HEADERS} ${RESOURCES})
 
-# Link Qt6 libraries
+# Link Qt6 libraries and QtPlugin library
 target_link_libraries(AdvancedPluginManager
     Qt6::Core
     Qt6::Widgets
@@ -112,6 +106,7 @@ target_link_libraries(AdvancedPluginManager
     Qt6::Concurrent
     Qt6::Qml
     Qt6::Gui
+    QtPlugin::Core
 )
 
 # Link Qt6 Charts if available

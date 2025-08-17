@@ -39,7 +39,8 @@
 #include <QMap>
 #include <QSet>
 #include <memory>
-#include "core/PluginInterface.h"
+#include <qtplugin/qtplugin.hpp>
+#include <qtplugin/security/security_manager.hpp>
 #include "managers/PluginPermissionSystem.h"
 #include "managers/PluginResourceMonitor.h"
 
@@ -83,7 +84,7 @@ struct ResourceLimits {
 struct SecurityPolicy {
     QString name;
     QString description;
-    SecurityLevel level = SecurityLevel::Sandbox;
+    qtplugin::SecurityLevel level = qtplugin::SecurityLevel::Standard;
     SandboxType sandboxType = SandboxType::Process;
     ResourceLimits limits;
     QMap<PermissionType, bool> permissions;

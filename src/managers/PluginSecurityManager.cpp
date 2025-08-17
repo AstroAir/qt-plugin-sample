@@ -131,18 +131,18 @@ void PluginSecurityManager::applySandbox(const QString& pluginName) {
     qCInfo(pluginManager) << "Applying sandbox restrictions to plugin:" << pluginName;
 }
 
-SecurityLevel PluginSecurityManager::evaluateSecurityLevel(const QString& filePath) const {
+qtplugin::SecurityLevel PluginSecurityManager::evaluateSecurityLevel(const QString& filePath) const {
     // **Check if plugin is signed and trusted**
     if (!validateSignature(filePath)) {
-        return SecurityLevel::Restricted;
+        return qtplugin::SecurityLevel::Basic;
     }
 
     // **Check against security policy**
     if (m_securityPolicies.value("sandboxMode").toBool()) {
-        return SecurityLevel::Sandbox;
+        return qtplugin::SecurityLevel::Strict;
     }
 
-    return SecurityLevel::Unrestricted;
+    return qtplugin::SecurityLevel::Standard;
 }
 
 void PluginSecurityManager::addTrustedPublisher(const QString& publisher) {

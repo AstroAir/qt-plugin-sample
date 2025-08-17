@@ -1,7 +1,7 @@
 
 // PluginRegistry.cpp
 #include "PluginRegistry.h"
-#include "PluginManager.h"
+#include <qtplugin/qtplugin.hpp>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <algorithm>
@@ -11,12 +11,12 @@ PluginRegistry::PluginRegistry(QObject* parent)
     , m_pluginManager(nullptr)
 {
     // **Get plugin manager instance**
-    m_pluginManager = qobject_cast<PluginManager*>(parent);
-    
+    m_pluginManager = qobject_cast<qtplugin::PluginManager*>(parent);
+
     if (m_pluginManager) {
-        connect(m_pluginManager, &PluginManager::pluginLoaded,
+        connect(m_pluginManager, &qtplugin::PluginManager::plugin_loaded,
                 this, &PluginRegistry::onPluginLoaded);
-        connect(m_pluginManager, &PluginManager::pluginUnloaded,
+        connect(m_pluginManager, &qtplugin::PluginManager::plugin_unloaded,
                 this, &PluginRegistry::onPluginUnloaded);
         // ... connect other signals
     }
@@ -125,7 +125,8 @@ void PluginRegistry::applySorting() {
 // **Public slot implementations**
 void PluginRegistry::refreshPlugins() {
     if (m_pluginManager) {
-        m_pluginManager->refreshPluginList();
+        // TODO: Implement refresh using lib/ API
+        // Could use load_all_plugins() or rediscover plugins
         // Refresh the plugin list by reapplying filters
         applyFilter();
     }
@@ -157,27 +158,26 @@ void PluginRegistry::onPluginUnloaded(const QString& name) {
     }
 }
 
-void PluginRegistry::onPluginStatusChanged(const QString& name, PluginStatus status) {
+void PluginRegistry::onPluginStatusChanged(const QString& name, qtplugin::PluginState status) {
     auto it = std::find_if(m_plugins.begin(), m_plugins.end(),
                           [&name](PluginDescriptor& desc) {
                               return desc.name == name;
                           });
 
     if (it != m_plugins.end()) {
-        // Convert PluginStatus enum to string
+        // Convert PluginState enum to string
         QString statusStr;
         switch (status) {
-        case PluginStatus::Unknown: statusStr = "Unknown"; break;
-        case PluginStatus::Discovered: statusStr = "Discovered"; break;
-        case PluginStatus::Loading: statusStr = "Loading"; break;
-        case PluginStatus::Loaded: statusStr = "Loaded"; break;
-        case PluginStatus::Initializing: statusStr = "Initializing"; break;
-        case PluginStatus::Running: statusStr = "Running"; break;
-        case PluginStatus::Paused: statusStr = "Paused"; break;
-        case PluginStatus::Stopping: statusStr = "Stopping"; break;
-        case PluginStatus::Stopped: statusStr = "Stopped"; break;
-        case PluginStatus::Error: statusStr = "Error"; break;
-        case PluginStatus::Unloading: statusStr = "Unloading"; break;
+        case qtplugin::PluginState::Unloaded: statusStr = "Unloaded"; break;
+        case qtplugin::PluginState::Loading: statusStr = "Loading"; break;
+        case qtplugin::PluginState::Loaded: statusStr = "Loaded"; break;
+        case qtplugin::PluginState::Initializing: statusStr = "Initializing"; break;
+        case qtplugin::PluginState::Running: statusStr = "Running"; break;
+        case qtplugin::PluginState::Paused: statusStr = "Paused"; break;
+        case qtplugin::PluginState::Stopping: statusStr = "Stopping"; break;
+        case qtplugin::PluginState::Stopped: statusStr = "Stopped"; break;
+        case qtplugin::PluginState::Error: statusStr = "Error"; break;
+        case qtplugin::PluginState::Reloading: statusStr = "Reloading"; break;
         }
         it->status = statusStr;
 
@@ -197,21 +197,20 @@ void PluginRegistry::onPluginStatusChanged(const QString& name, PluginStatus sta
 
 bool PluginRegistry::enablePlugin(const QString& name) {
     if (m_pluginManager) {
-        // Enable plugin through manager
-        auto result = m_pluginManager->loadPlugin(name);
-        if (result == PluginManager::LoadResult::Success) {
-            updatePluginDescriptor(name);
-            return true;
-        }
+        // TODO: Implement enable plugin using lib/ API
+        // The lib/ API doesn't have a direct enable/disable concept
+        // This would need to be implemented at the application level
+        updatePluginDescriptor(name);
+        return true;
     }
     return false;
 }
 
 bool PluginRegistry::disablePlugin(const QString& name) {
     if (m_pluginManager) {
-        // Disable plugin through manager
-        auto result = m_pluginManager->unloadPlugin(name);
-        if (result == PluginManager::UnloadResult::Success) {
+        // Unload plugin using lib/ API
+        auto result = m_pluginManager->unload_plugin(name.toStdString());
+        if (result) {
             updatePluginDescriptor(name);
             return true;
         }
@@ -269,8 +268,8 @@ QStringList PluginRegistry::getPluginsByCapability(const QString& capability) co
 
 void PluginRegistry::installPlugin(const QString& filePath) {
     if (m_pluginManager) {
-        auto result = m_pluginManager->loadPlugin(filePath);
-        if (result == PluginManager::LoadResult::Success) {
+        auto result = m_pluginManager->load_plugin(std::filesystem::path(filePath.toStdString()));
+        if (result) {
             applyFilter(); // Refresh the list
         }
     }
@@ -278,8 +277,8 @@ void PluginRegistry::installPlugin(const QString& filePath) {
 
 void PluginRegistry::uninstallPlugin(const QString& name) {
     if (m_pluginManager) {
-        auto result = m_pluginManager->unloadPlugin(name);
-        if (result == PluginManager::UnloadResult::Success) {
+        auto result = m_pluginManager->unload_plugin(name.toStdString());
+        if (result) {
             onPluginUnloaded(name);
         }
     }
@@ -288,8 +287,8 @@ void PluginRegistry::uninstallPlugin(const QString& name) {
 void PluginRegistry::updatePlugin(const QString& name) {
     // Unload and reload the plugin
     if (m_pluginManager) {
-        auto unloadResult = m_pluginManager->unloadPlugin(name);
-        if (unloadResult == PluginManager::UnloadResult::Success) {
+        auto unloadResult = m_pluginManager->unload_plugin(name.toStdString());
+        if (unloadResult) {
             // Try to reload from the same location
             // Note: In a real implementation, you'd store the file path
             onPluginUnloaded(name);
@@ -299,14 +298,14 @@ void PluginRegistry::updatePlugin(const QString& name) {
 
 QJsonObject PluginRegistry::getPluginMetrics(const QString& name) const {
     if (m_pluginManager) {
-        return m_pluginManager->getPluginMetrics(name);
+        return m_pluginManager->plugin_metrics(name.toStdString());
     }
     return QJsonObject();
 }
 
 void PluginRegistry::configurePlugin(const QString& name, const QJsonObject& config) {
     if (m_pluginManager) {
-        m_pluginManager->savePluginConfiguration(name, config);
+        m_pluginManager->configure_plugin(name.toStdString(), config);
         updatePluginDescriptor(name);
     }
 }
@@ -373,19 +372,20 @@ void PluginRegistry::updatePluginDescriptor(const QString& name) {
     descriptor.name = name;
 
     // Get plugin information from manager
-    if (m_pluginManager->isPluginLoaded(name)) {
+    auto plugin_info = m_pluginManager->get_plugin_info(name.toStdString());
+    if (plugin_info) {
         descriptor.enabled = true;
         descriptor.status = "Loaded";
 
         // Get metrics if available
-        QJsonObject metrics = m_pluginManager->getPluginMetrics(name);
+        QJsonObject metrics = m_pluginManager->plugin_metrics(name.toStdString());
         if (!metrics.isEmpty()) {
             descriptor.memoryUsage = metrics.value("memoryUsage").toInt();
             descriptor.cpuUsage = metrics.value("cpuUsage").toDouble();
         }
 
         // Get configuration if available
-        QJsonObject config = m_pluginManager->loadPluginConfiguration(name);
+        QJsonObject config = m_pluginManager->get_plugin_configuration(name.toStdString());
         if (!config.isEmpty()) {
             descriptor.description = config.value("description").toString();
             descriptor.author = config.value("author").toString();

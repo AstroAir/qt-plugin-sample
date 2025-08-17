@@ -23,7 +23,7 @@
 #include <QQuickWidget>
 #include <memory>
 
-class PluginManager;
+namespace qtplugin { class PluginManager; }
 class PluginRegistry;
 class ThemeManager;
 class PluginListWidget;
@@ -155,7 +155,7 @@ private:
     QDockWidget* createToolboxDock();
     
     // **Core Components**
-    std::unique_ptr<PluginManager> m_pluginManager;
+    std::unique_ptr<qtplugin::PluginManager> m_pluginManager;
     std::unique_ptr<PluginRegistry> m_pluginRegistry;
     std::unique_ptr<ThemeManager> m_themeManager;
     std::unique_ptr<SecurityManager> m_securityManager;

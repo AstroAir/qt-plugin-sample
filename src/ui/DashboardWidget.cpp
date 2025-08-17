@@ -1,6 +1,6 @@
 // DashboardWidget.cpp - Implementation of comprehensive dashboard
 #include "DashboardWidget.h"
-#include "../core/PluginManager.h"
+#include <qtplugin/qtplugin.hpp>
 #include "../core/PluginRegistry.h"
 #include <QApplication>
 #include <QVBoxLayout>
@@ -50,14 +50,14 @@ DashboardWidget::DashboardWidget(QWidget* parent)
 
 DashboardWidget::~DashboardWidget() = default;
 
-void DashboardWidget::setPluginManager(PluginManager* manager)
+void DashboardWidget::setPluginManager(qtplugin::PluginManager* manager)
 {
     m_pluginManager = manager;
     if (manager) {
         // Connect to plugin manager signals for real-time updates
-        connect(manager, &PluginManager::pluginLoaded, this, &DashboardWidget::updateMetrics);
-        connect(manager, &PluginManager::pluginUnloaded, this, &DashboardWidget::updateMetrics);
-        connect(manager, &PluginManager::pluginStatusChanged, this, &DashboardWidget::updateMetrics);
+        connect(manager, &qtplugin::PluginManager::plugin_loaded, this, &DashboardWidget::updateMetrics);
+        connect(manager, &qtplugin::PluginManager::plugin_unloaded, this, &DashboardWidget::updateMetrics);
+        connect(manager, &qtplugin::PluginManager::plugin_state_changed, this, &DashboardWidget::updateMetrics);
     }
     updateAllComponents();
 }

@@ -31,64 +31,72 @@ ExampleUIPlugin::ExampleUIPlugin(QObject* parent)
 
 ExampleUIPlugin::~ExampleUIPlugin()
 {
-    cleanup();
+    shutdown();
 }
 
-bool ExampleUIPlugin::initialize()
+qtplugin::expected<void, qtplugin::PluginError> ExampleUIPlugin::initialize()
 {
     if (m_initialized) {
-        return true;
+        return qtplugin::make_success();
     }
 
     qDebug() << "Initializing Example UI Plugin...";
-    
+
     // Load default configuration
-    m_configuration = defaultConfiguration();
-    
+    auto default_config = default_configuration();
+    if (default_config) {
+        m_configuration = *default_config;
+    }
+
     // Setup timer
     m_timerInterval = m_configuration["updateInterval"].toInt(1000);
     m_timer->setInterval(m_timerInterval);
-    
+
     m_initialized = true;
-    m_status = PluginStatus::Running;
-    
+    m_state = qtplugin::PluginState::Running;
+
     qDebug() << "Example UI Plugin initialized successfully";
-    return true;
+    return qtplugin::make_success();
 }
 
-void ExampleUIPlugin::cleanup()
+void ExampleUIPlugin::shutdown() noexcept
 {
     if (!m_initialized) {
         return;
     }
 
-    qDebug() << "Cleaning up Example UI Plugin...";
-    
+    qDebug() << "Shutting down Example UI Plugin...";
+
     if (m_timer) {
         m_timer->stop();
     }
-    
+
     // Save current state
     saveWidgetState();
-    
+
     // Clean up widgets
     if (m_mainWidget) {
         m_mainWidget->deleteLater();
         m_mainWidget = nullptr;
     }
-    
+
     if (m_configWidget) {
         m_configWidget->deleteLater();
         m_configWidget = nullptr;
     }
-    
+
     m_initialized = false;
-    m_status = PluginStatus::Stopped;
-    
-    qDebug() << "Example UI Plugin cleaned up";
+    m_state = qtplugin::PluginState::Stopped;
+
+    qDebug() << "Example UI Plugin shut down";
 }
 
-QJsonObject ExampleUIPlugin::defaultConfiguration() const
+qtplugin::PluginCapabilities ExampleUIPlugin::capabilities() const noexcept
+{
+    return qtplugin::PluginCapability::UI | qtplugin::PluginCapability::Configuration;
+}
+
+std::optional<QJsonObject> ExampleUIPlugin::default_configuration() const
 {
     QJsonObject config;
     config["theme"] = "Default";
@@ -103,35 +111,35 @@ QJsonObject ExampleUIPlugin::defaultConfiguration() const
     return config;
 }
 
-bool ExampleUIPlugin::configure(const QJsonObject& config)
+qtplugin::expected<void, qtplugin::PluginError> ExampleUIPlugin::configure(const QJsonObject& config)
 {
     m_configuration = config;
-    
+
     // Apply configuration
     m_currentTheme = config["theme"].toString("Default");
     m_animationsEnabled = config["animationsEnabled"].toBool(true);
     m_timerInterval = config["updateInterval"].toInt(1000);
-    
+
     if (m_timer) {
         m_timer->setInterval(m_timerInterval);
     }
-    
+
     // Update UI if widgets exist
     if (m_configWidget) {
         // Update configuration widget to reflect new settings
         onConfigurationChanged();
     }
-    
+
     qDebug() << "Example UI Plugin configured with theme:" << m_currentTheme;
-    return true;
+    return qtplugin::make_success();
 }
 
-QJsonObject ExampleUIPlugin::currentConfiguration() const
+QJsonObject ExampleUIPlugin::current_configuration() const
 {
     return m_configuration;
 }
 
-std::unique_ptr<QWidget> ExampleUIPlugin::createWidget(QWidget* parent)
+std::unique_ptr<QWidget> ExampleUIPlugin::create_widget(QWidget* parent)
 {
     if (!m_initialized) {
         initialize();
@@ -152,69 +160,100 @@ std::unique_ptr<QWidget> ExampleUIPlugin::createWidget(QWidget* parent)
 
 
 
-QWidget* ExampleUIPlugin::createConfigurationWidget(QWidget* parent)
+std::unique_ptr<QWidget> ExampleUIPlugin::create_configuration_widget(QWidget* parent)
 {
     if (m_configWidget) {
-        return m_configWidget;
+        // Return a copy since we can't return the same widget multiple times
+        auto widget = std::make_unique<QWidget>(parent);
+        widget->setWindowTitle("Example UI Plugin - Configuration");
+        widget->resize(400, 300);
+        setupConfigurationWidget(widget.get());
+        return widget;
     }
 
-    auto* widget = new QWidget(parent);
+    auto widget = std::make_unique<QWidget>(parent);
     widget->setWindowTitle("Example UI Plugin - Configuration");
     widget->resize(400, 300);
-    
-    setupConfigurationWidget(widget);
-    m_configWidget = widget;
-    
+
+    setupConfigurationWidget(widget.get());
+    m_configWidget = widget.get();
+
     return widget;
 }
 
-QVariant ExampleUIPlugin::executeCommand(const QString& command, const QVariantMap& params)
+qtplugin::expected<QJsonObject, qtplugin::PluginError> ExampleUIPlugin::execute_command(std::string_view command, const QJsonObject& params)
 {
-    if (command == "getStatus") {
-        QVariantMap status;
+    QString cmd = QString::fromUtf8(command.data(), command.size());
+
+    if (cmd == "getStatus") {
+        QJsonObject status;
         status["initialized"] = m_initialized;
         status["progressValue"] = m_progressValue;
         status["theme"] = m_currentTheme;
         status["timerRunning"] = m_timer && m_timer->isActive();
         return status;
-    } else if (command == "setProgress") {
-        int value = params.value("value", 0).toInt();
+    } else if (cmd == "setProgress") {
+        int value = params.value("value").toInt(0);
         m_progressValue = qBound(0, value, 100);
         if (m_progressBar) {
             m_progressBar->setValue(m_progressValue);
         }
-        return true;
-    } else if (command == "startTimer") {
+        QJsonObject result;
+        result["success"] = true;
+        result["value"] = m_progressValue;
+        return result;
+    } else if (cmd == "startTimer") {
+        QJsonObject result;
         if (m_timer) {
             m_timer->start();
-            return true;
+            result["success"] = true;
+            result["message"] = "Timer started";
+        } else {
+            result["success"] = false;
+            result["message"] = "Timer not available";
         }
-        return false;
-    } else if (command == "stopTimer") {
+        return result;
+    } else if (cmd == "stopTimer") {
+        QJsonObject result;
         if (m_timer) {
             m_timer->stop();
-            return true;
+            result["success"] = true;
+            result["message"] = "Timer stopped";
+        } else {
+            result["success"] = false;
+            result["message"] = "Timer not available";
         }
-        return false;
-    } else if (command == "addListItem") {
-        QString text = params.value("text", "New Item").toString();
+        return result;
+    } else if (cmd == "addListItem") {
+        QString text = params.value("text").toString("New Item");
+        QJsonObject result;
         if (m_listWidget) {
             m_listWidget->addItem(text);
-            return true;
+            result["success"] = true;
+            result["message"] = "Item added";
+            result["text"] = text;
+        } else {
+            result["success"] = false;
+            result["message"] = "List widget not available";
         }
-        return false;
-    } else if (command == "clearList") {
+        return result;
+    } else if (cmd == "clearList") {
+        QJsonObject result;
         if (m_listWidget) {
             m_listWidget->clear();
-            return true;
+            result["success"] = true;
+            result["message"] = "List cleared";
+        } else {
+            result["success"] = false;
+            result["message"] = "List widget not available";
         }
-        return false;
+        return result;
     }
-    
-    return QVariant();
+
+    return qtplugin::make_error<QJsonObject>(qtplugin::PluginErrorCode::CommandNotFound, "Unknown command: " + cmd.toStdString());
 }
 
-QStringList ExampleUIPlugin::availableCommands() const
+std::vector<std::string> ExampleUIPlugin::available_commands() const
 {
     return {"getStatus", "setProgress", "startTimer", "stopTimer", "addListItem", "clearList"};
 }
@@ -234,7 +273,7 @@ void ExampleUIPlugin::setupDemoWidget(QWidget* widget)
     
     headerLayout->addStretch();
     
-    auto* versionLabel = new QLabel("v" + version().toString());
+    auto* versionLabel = new QLabel("v" + QString::fromStdString(version().to_string()));
     versionLabel->setStyleSheet("color: #7f8c8d;");
     headerLayout->addWidget(versionLabel);
     
@@ -410,13 +449,14 @@ void ExampleUIPlugin::setupConfigurationWidget(QWidget* widget)
 
     connect(applyBtn, &QPushButton::clicked, [this]() {
         // Apply current configuration
-        QJsonObject config = currentConfiguration();
+        QJsonObject config = current_configuration();
         configure(config);
         QMessageBox::information(m_configWidget, "Settings", "Configuration applied successfully!");
     });
 
     connect(resetBtn, &QPushButton::clicked, [this]() {
-        QJsonObject defaults = defaultConfiguration();
+        auto defaults_opt = default_configuration();
+        QJsonObject defaults = defaults_opt ? *defaults_opt : QJsonObject();
         configure(defaults);
 
         // Update UI

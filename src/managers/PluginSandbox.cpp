@@ -34,7 +34,7 @@ void SecurityPolicy::initializeDefaults() {
     permissions.clear();
     
     switch (level) {
-    case SecurityLevel::Unrestricted:
+    case qtplugin::SecurityLevel::None:
         permissions[PermissionType::FileRead] = true;
         permissions[PermissionType::FileWrite] = true;
         permissions[PermissionType::NetworkConnect] = true;
@@ -51,7 +51,7 @@ void SecurityPolicy::initializeDefaults() {
         permissions[PermissionType::Notifications] = true;
         break;
 
-    case SecurityLevel::LimitedAccess:
+    case qtplugin::SecurityLevel::Basic:
         permissions[PermissionType::FileRead] = true;
         permissions[PermissionType::FileWrite] = false;
         permissions[PermissionType::NetworkConnect] = true;
@@ -68,7 +68,7 @@ void SecurityPolicy::initializeDefaults() {
         permissions[PermissionType::Notifications] = true;
         break;
 
-    case SecurityLevel::ReadOnly:
+    case qtplugin::SecurityLevel::Standard:
         permissions[PermissionType::FileRead] = true;
         permissions[PermissionType::FileWrite] = false;
         permissions[PermissionType::NetworkConnect] = false;
@@ -85,8 +85,8 @@ void SecurityPolicy::initializeDefaults() {
         permissions[PermissionType::Notifications] = false;
         break;
 
-    case SecurityLevel::Restricted:
-    case SecurityLevel::Sandbox:
+    case qtplugin::SecurityLevel::Strict:
+    case qtplugin::SecurityLevel::Maximum:
         // All permissions disabled by default
         for (auto type : {PermissionType::FileWrite, PermissionType::NetworkConnect, PermissionType::SystemRegistry,
                          PermissionType::ProcessCreate, PermissionType::SystemInfo, PermissionType::DatabaseAccess,
@@ -94,15 +94,15 @@ void SecurityPolicy::initializeDefaults() {
             permissions[type] = false;
         }
         // Only basic permissions allowed
-        permissions[PermissionType::FileRead] = (level == SecurityLevel::Restricted);
+        permissions[PermissionType::FileRead] = (level == qtplugin::SecurityLevel::Strict);
         permissions[PermissionType::WindowCreate] = true;
-        permissions[PermissionType::Clipboard] = (level == SecurityLevel::Restricted);
+        permissions[PermissionType::Clipboard] = (level == qtplugin::SecurityLevel::Strict);
         break;
     }
     
     // Set resource limits based on security level
     switch (level) {
-    case SecurityLevel::Unrestricted:
+    case qtplugin::SecurityLevel::None:
         limits.maxMemoryBytes = 500 * 1024 * 1024; // 500MB
         limits.maxCpuPercent = 50.0;
         limits.maxThreads = 50;
@@ -113,7 +113,7 @@ void SecurityPolicy::initializeDefaults() {
         limits.timeoutSeconds = 1800; // 30 minutes
         break;
         
-    case SecurityLevel::LimitedAccess:
+    case qtplugin::SecurityLevel::Basic:
         limits.maxMemoryBytes = 200 * 1024 * 1024; // 200MB
         limits.maxCpuPercent = 30.0;
         limits.maxThreads = 20;
@@ -124,7 +124,7 @@ void SecurityPolicy::initializeDefaults() {
         limits.timeoutSeconds = 900; // 15 minutes
         break;
         
-    case SecurityLevel::ReadOnly:
+    case qtplugin::SecurityLevel::Standard:
         limits.maxMemoryBytes = 100 * 1024 * 1024; // 100MB
         limits.maxCpuPercent = 25.0;
         limits.maxThreads = 10;
@@ -135,7 +135,7 @@ void SecurityPolicy::initializeDefaults() {
         limits.timeoutSeconds = 300; // 5 minutes
         break;
         
-    case SecurityLevel::Restricted:
+    case qtplugin::SecurityLevel::Strict:
         limits.maxMemoryBytes = 50 * 1024 * 1024; // 50MB
         limits.maxCpuPercent = 15.0;
         limits.maxThreads = 5;
@@ -146,7 +146,7 @@ void SecurityPolicy::initializeDefaults() {
         limits.timeoutSeconds = 180; // 3 minutes
         break;
         
-    case SecurityLevel::Sandbox:
+    case qtplugin::SecurityLevel::Maximum:
         limits.maxMemoryBytes = 25 * 1024 * 1024; // 25MB
         limits.maxCpuPercent = 10.0;
         limits.maxThreads = 3;
@@ -224,35 +224,35 @@ void PluginSandboxManager::createDefaultPolicies() {
     SecurityPolicy unrestricted;
     unrestricted.name = "Unrestricted";
     unrestricted.description = "No restrictions - for trusted plugins";
-    unrestricted.level = SecurityLevel::Unrestricted;
+    unrestricted.level = qtplugin::SecurityLevel::None;
     unrestricted.initializeDefaults();
     d->policies[unrestricted.name] = unrestricted;
     
     SecurityPolicy low;
     low.name = "Low";
     low.description = "Basic restrictions";
-    low.level = SecurityLevel::LimitedAccess;
+    low.level = qtplugin::SecurityLevel::Basic;
     low.initializeDefaults();
     d->policies[low.name] = low;
     
     SecurityPolicy medium;
     medium.name = "Medium";
     medium.description = "Standard restrictions";
-    medium.level = SecurityLevel::ReadOnly;
+    medium.level = qtplugin::SecurityLevel::Standard;
     medium.initializeDefaults();
     d->policies[medium.name] = medium;
     
     SecurityPolicy high;
     high.name = "High";
     high.description = "Strict restrictions";
-    high.level = SecurityLevel::Restricted;
+    high.level = qtplugin::SecurityLevel::Strict;
     high.initializeDefaults();
     d->policies[high.name] = high;
     
     SecurityPolicy maximum;
     maximum.name = "Maximum";
     maximum.description = "Maximum security for untrusted plugins";
-    maximum.level = SecurityLevel::Sandbox;
+    maximum.level = qtplugin::SecurityLevel::Maximum;
     maximum.initializeDefaults();
     d->policies[maximum.name] = maximum;
 }

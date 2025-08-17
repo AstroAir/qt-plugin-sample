@@ -6,9 +6,9 @@
 #include <QtQml/qqmlregistration.h>
 #include <QUuid>
 #include <QJsonObject>
-#include "PluginInterface.h"
+#include <qtplugin/qtplugin.hpp>
 
-class PluginManager;
+namespace qtplugin { class PluginManager; }
 
 class PluginRegistry : public QAbstractListModel {
     Q_OBJECT
@@ -110,15 +110,15 @@ signals:
 private slots:
     void onPluginLoaded(const QString& name);
     void onPluginUnloaded(const QString& name);
-    void onPluginStatusChanged(const QString& name, PluginStatus status);
+    void onPluginStatusChanged(const QString& name, qtplugin::PluginState status);
 
 private:
     void updatePluginDescriptor(const QString& name);
     void applyFilter();
     void applySorting();
-    QString statusToString(PluginStatus status) const;
+    QString statusToString(qtplugin::PluginState status) const;
     
-    PluginManager* m_pluginManager;
+    qtplugin::PluginManager* m_pluginManager;
     QList<PluginDescriptor> m_plugins;
     QList<PluginDescriptor> m_filteredPlugins;
     QString m_filterText;
