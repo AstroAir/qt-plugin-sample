@@ -26,7 +26,9 @@ enum class SecurityLevel {
     None = 0,       ///< No security validation
     Basic = 1,      ///< Basic file and metadata validation
     Standard = 2,   ///< Standard security checks including signatures
+    Moderate = 2,   ///< Alias for Standard (for backward compatibility)
     Strict = 3,     ///< Strict validation with sandboxing
+    Permissive = 1, ///< Alias for Basic (for backward compatibility)
     Maximum = 4     ///< Maximum security with full isolation
 };
 
@@ -126,8 +128,18 @@ public:
     void add_trusted_plugin(std::string_view plugin_id, SecurityLevel trust_level) override;
     void remove_trusted_plugin(std::string_view plugin_id) override;
     SecurityLevel security_level() const noexcept override;
+    SecurityLevel get_security_level() const noexcept { return security_level(); }
     void set_security_level(SecurityLevel level) override;
     QJsonObject security_statistics() const override;
+
+    // Additional getter methods for testing
+    uint64_t get_validations_performed() const noexcept { return m_validations_performed.load(); }
+    uint64_t get_violations_detected() const noexcept { return m_violations_detected.load(); }
+
+    // Methods for testing (normally private)
+    SecurityValidationResult validate_metadata(const std::filesystem::path& file_path) const;
+    SecurityValidationResult validate_signature(const std::filesystem::path& file_path) const;
+    bool is_safe_file_path(const std::filesystem::path& file_path) const;
     
     /**
      * @brief Load trusted plugins list from file
@@ -166,15 +178,13 @@ private:
     mutable std::atomic<uint64_t> m_validations_performed{0};
     mutable std::atomic<uint64_t> m_validations_passed{0};
     mutable std::atomic<uint64_t> m_validations_failed{0};
+    mutable std::atomic<uint64_t> m_violations_detected{0};
     
     // Validation methods
     SecurityValidationResult validate_file_integrity(const std::filesystem::path& file_path) const;
-    SecurityValidationResult validate_metadata(const std::filesystem::path& file_path) const;
-    SecurityValidationResult validate_signature(const std::filesystem::path& file_path) const;
     SecurityValidationResult validate_permissions(const std::filesystem::path& file_path) const;
-    
+
     // Helper methods
-    bool is_safe_file_path(const std::filesystem::path& file_path) const;
     bool has_valid_extension(const std::filesystem::path& file_path) const;
     std::vector<std::string> get_allowed_extensions() const;
 };

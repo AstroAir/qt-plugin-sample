@@ -664,14 +664,61 @@ bool ConfigurationManager::is_auto_persist_enabled() const {
 }
 
 void ConfigurationManager::notify_change(const ConfigurationChangeEvent& event) {
-    Q_UNUSED(event)
-    // TODO: Implement change notification
+    std::shared_lock lock(m_subscriptions_mutex);
+
+    // Increment change counter
+    m_change_count.fetch_add(1);
+
+    // Notify all matching subscriptions
+    for (const auto& [subscription_id, subscription] : m_subscriptions) {
+        if (subscription && matches_filter(*subscription, event)) {
+            try {
+                // Call the callback in a safe manner
+                subscription->callback(event);
+            } catch (const std::exception& e) {
+                qCWarning(configLog) << "Exception in configuration change callback for subscription"
+                                    << QString::fromStdString(subscription_id) << ":" << e.what();
+            } catch (...) {
+                qCWarning(configLog) << "Unknown exception in configuration change callback for subscription"
+                                    << QString::fromStdString(subscription_id);
+            }
+        }
+    }
 }
 
 bool ConfigurationManager::matches_filter(const ChangeSubscription& subscription, const ConfigurationChangeEvent& event) const {
-    Q_UNUSED(subscription)
-    Q_UNUSED(event)
-    return false;
+    // Check key filter
+    if (subscription.key_filter.has_value()) {
+        const std::string& key_filter = subscription.key_filter.value();
+
+        // Support wildcard matching
+        if (key_filter.back() == '*') {
+            // Prefix matching
+            std::string prefix = key_filter.substr(0, key_filter.length() - 1);
+            if (event.key.substr(0, prefix.length()) != prefix) {
+                return false;
+            }
+        } else if (key_filter != event.key) {
+            // Exact matching
+            return false;
+        }
+    }
+
+    // Check scope filter
+    if (subscription.scope_filter.has_value()) {
+        if (subscription.scope_filter.value() != event.scope) {
+            return false;
+        }
+    }
+
+    // Check plugin filter
+    if (subscription.plugin_filter.has_value()) {
+        if (subscription.plugin_filter.value() != event.plugin_id) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 qtplugin::expected<void, PluginError> ConfigurationManager::persist_if_needed(ConfigurationScope scope, std::string_view plugin_id) {
@@ -751,10 +798,33 @@ bool ConfigurationManager::remove_nested_key(QJsonObject& obj, std::string_view 
 }
 
 void ConfigurationManager::collect_keys(const QJsonObject& obj, std::vector<std::string>& keys, const std::string& prefix) const {
-    Q_UNUSED(obj)
-    Q_UNUSED(keys)
-    Q_UNUSED(prefix)
-    // TODO: Implement
+    for (auto it = obj.begin(); it != obj.end(); ++it) {
+        const QString& key = it.key();
+        const QJsonValue& value = it.value();
+
+        // Build the full key path
+        std::string full_key = prefix.empty() ? key.toStdString() : prefix + "." + key.toStdString();
+
+        // Add this key to the collection
+        keys.push_back(full_key);
+
+        // If the value is an object, recursively collect its keys
+        if (value.isObject()) {
+            collect_keys(value.toObject(), keys, full_key);
+        }
+        // If the value is an array, collect keys for array elements that are objects
+        else if (value.isArray()) {
+            const QJsonArray array = value.toArray();
+            for (int i = 0; i < array.size(); ++i) {
+                const QJsonValue& element = array[i];
+                if (element.isObject()) {
+                    std::string array_key = full_key + "[" + std::to_string(i) + "]";
+                    keys.push_back(array_key);
+                    collect_keys(element.toObject(), keys, array_key);
+                }
+            }
+        }
+    }
 }
 
 ConfigurationValidationResult ConfigurationManager::validate_property(const QJsonValue& value, const QJsonObject& schema, const std::string& property_name) const {

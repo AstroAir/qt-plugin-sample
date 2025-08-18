@@ -35,17 +35,37 @@
 #include "core/plugin_manager.hpp"
 #include "core/plugin_loader.hpp"
 #include "core/service_plugin_interface.hpp"
+#include "core/plugin_capability_discovery.hpp"
+// #include "core/plugin_lifecycle_manager.hpp"  // Temporarily disabled due to QStateMachine dependency
+
+// Enhanced plugin interfaces
+#include "interfaces/data_processor_plugin_interface.hpp"
+#ifdef QTPLUGIN_BUILD_NETWORK
+#include "interfaces/network_plugin_interface.hpp"
+#endif
+#ifdef QTPLUGIN_BUILD_UI
+#include "interfaces/ui_plugin_interface.hpp"
+#endif
+// #include "interfaces/scripting_plugin_interface.hpp"  // Temporarily disabled due to QJSEngine dependency
+
+// Platform-specific components (temporarily disabled due to conflicts)
+// #include "platform/platform_plugin_loader.hpp"
+// #include "platform/platform_error_handler.hpp"
+// #include "platform/platform_performance_monitor.hpp"
 
 // Communication system
 #include "communication/message_bus.hpp"
 #include "communication/message_types.hpp"
+// #include "communication/typed_event_system.hpp"  // Temporarily disabled
+// #include "communication/request_response_system.hpp"  // Temporarily disabled
+#include "communication/plugin_service_discovery.hpp"
 
 // Managers
 #include "managers/configuration_manager.hpp"
 #include "managers/logging_manager.hpp"
 #include "managers/resource_manager.hpp"
 #include "managers/resource_lifecycle.hpp"
-#include "managers/resource_monitor.hpp"
+// #include "managers/resource_monitor.hpp"  // Temporarily disabled due to conflicts
 
 // Utilities
 #include "utils/version.hpp"

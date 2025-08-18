@@ -13,7 +13,7 @@
 #include <filesystem>
 
 // Include the QtPlugin library
-#include "qtplugin/qtplugin.hpp"
+#include <qtplugin/qtplugin.hpp>
 
 /**
  * @brief Simple application to demonstrate configuration management
@@ -46,52 +46,31 @@ private slots:
         
         for (const QString& path : plugin_paths) {
             qDebug() << "Adding plugin search path:" << path;
-            m_plugin_manager->add_plugin_search_path(path);
+            m_plugin_manager->add_search_path(std::filesystem::path(path.toStdString()));
         }
-        
-        // Discover plugins
-        auto discovery_result = m_plugin_manager->discover_plugins();
-        if (!discovery_result) {
-            qDebug() << "Failed to discover plugins:" << QString::fromStdString(discovery_result.error().message);
-            return;
-        }
-        
-        qDebug() << "Discovered" << discovery_result.value() << "plugins";
+
+        // Discover plugins in current directory
+        auto discovered_plugins = m_plugin_manager->discover_plugins(std::filesystem::current_path() / "plugins" / "examples", true);
+        qDebug() << "Discovered" << discovered_plugins.size() << "plugins";
         
         // List available plugins
-        auto available_plugins = m_plugin_manager->get_available_plugins();
+        auto available_plugins = m_plugin_manager->all_plugin_info();
         qDebug() << "Available plugins:";
         for (const auto& plugin_info : available_plugins) {
-            qDebug() << "  -" << plugin_info.id << ":" << plugin_info.name;
+            qDebug() << "  -" << QString::fromStdString(plugin_info.id) << ":" << QString::fromStdString(plugin_info.metadata.name);
         }
-        
-        // Load the configuration example plugin
-        auto load_result = m_plugin_manager->load_plugin("configuration_example");
-        if (!load_result) {
-            qDebug() << "Failed to load configuration example plugin:" << QString::fromStdString(load_result.error().message);
-            return;
-        }
-        
-        qDebug() << "Configuration example plugin loaded successfully";
-        
-        // Configure the plugin
-        QJsonObject plugin_config;
-        plugin_config["demo_interval"] = 2000; // 2 seconds between demos
-        plugin_config["auto_start_demo"] = true;
-        
-        auto config_result = m_plugin_manager->configure_plugin("configuration_example", plugin_config);
-        if (!config_result) {
-            qDebug() << "Failed to configure plugin:" << QString::fromStdString(config_result.error().message);
+
+        // Try to load plugins from discovered paths
+        if (!discovered_plugins.empty()) {
+            auto load_result = m_plugin_manager->load_plugin(discovered_plugins[0]);
+            if (!load_result) {
+                qDebug() << "Failed to load plugin:" << QString::fromStdString(load_result.error().message);
+                return;
+            }
+
+            qDebug() << "Plugin loaded successfully:" << QString::fromStdString(load_result.value());
         } else {
-            qDebug() << "Plugin configured successfully";
-        }
-        
-        // Start the plugin
-        auto start_result = m_plugin_manager->start_plugin("configuration_example");
-        if (!start_result) {
-            qDebug() << "Failed to start plugin:" << QString::fromStdString(start_result.error().message);
-        } else {
-            qDebug() << "Plugin started successfully - demonstrations will begin";
+            qDebug() << "No plugins found to load";
         }
         
         // Schedule shutdown after demonstrations
@@ -101,19 +80,14 @@ private slots:
     void shutdown()
     {
         qDebug() << "\n--- Shutting Down Application ---";
-        
-        // Stop all plugins
-        auto stop_result = m_plugin_manager->stop_all_plugins();
-        if (!stop_result) {
-            qDebug() << "Warning: Failed to stop all plugins:" << QString::fromStdString(stop_result.error().message);
-        }
-        
-        // Unload all plugins
-        auto unload_result = m_plugin_manager->unload_all_plugins();
-        if (!unload_result) {
-            qDebug() << "Warning: Failed to unload all plugins:" << QString::fromStdString(unload_result.error().message);
-        }
-        
+
+        // Stop all services
+        int stopped = m_plugin_manager->stop_all_services();
+        qDebug() << "Stopped" << stopped << "services";
+
+        // Shutdown all plugins
+        m_plugin_manager->shutdown_all_plugins();
+
         qDebug() << "Application shutdown complete";
         QCoreApplication::quit();
     }
@@ -136,36 +110,8 @@ private:
     void demonstrateConfigurationManager()
     {
         qDebug() << "\n--- Configuration Manager Demonstration ---";
-        
-        // Get the configuration manager
-        auto& config_manager = m_plugin_manager->configuration_manager();
-        
-        // Demonstrate basic configuration operations
-        qDebug() << "Setting global application configuration...";
-        config_manager.set_value("app.name", QJsonValue("Configuration Demo App"));
-        config_manager.set_value("app.version", QJsonValue("1.0.0"));
-        config_manager.set_value("app.debug", QJsonValue(true));
-        
-        // Demonstrate nested configuration
-        config_manager.set_value("database.host", QJsonValue("localhost"));
-        config_manager.set_value("database.port", QJsonValue(5432));
-        config_manager.set_value("database.name", QJsonValue("demo_db"));
-        
-        // Retrieve and display configuration
-        auto app_name = config_manager.get_value("app.name");
-        if (app_name.has_value()) {
-            qDebug() << "Application name:" << app_name.value().toString();
-        }
-        
-        auto db_config = config_manager.get_value("database");
-        if (db_config.has_value() && db_config.value().isObject()) {
-            qDebug() << "Database configuration:" << QJsonDocument(db_config.value().toObject()).toJson(QJsonDocument::Compact);
-        }
-        
-        // Show configuration statistics
-        auto stats = config_manager.get_statistics();
-        qDebug() << "Configuration statistics:" << QJsonDocument(stats).toJson(QJsonDocument::Compact);
-        
+        qDebug() << "This would demonstrate configuration management features";
+
         // Schedule plugin loading
         QTimer::singleShot(1000, this, &ConfigurationExampleApp::loadAndStartPlugin);
     }

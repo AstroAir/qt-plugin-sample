@@ -233,12 +233,69 @@ ResourceManager::create_pool(ResourceType type, std::string_view pool_name, cons
                                "No factory registered for resource type: " + resource_type_to_string(type));
     }
     
-    // For now, create a generic pool (this would be specialized based on type)
-    // This is a simplified implementation - in practice, you'd have type-specific pool creation
+    // Create a generic resource pool for the specified type
+    // For this implementation, we'll create a basic pool that can handle any resource type
+    try {
+        // Create a generic resource pool using void* for type erasure
+        // This is a simplified implementation that provides basic pool functionality
 
-    // Store the pool in our map to track it
-    m_pools[pool_name_str] = nullptr; // Placeholder for actual pool implementation
-    m_pool_types.emplace(pool_name_str, std::type_index(typeid(void))); // Generic type for now
+        struct GenericResourcePool {
+            std::string name;
+            ResourceType type;
+            ResourceQuota quota;
+            std::vector<std::unique_ptr<void, std::function<void(void*)>>> available_resources;
+            std::unordered_map<std::string, std::unique_ptr<void, std::function<void(void*)>>> in_use_resources;
+            std::atomic<size_t> total_created{0};
+            std::atomic<size_t> total_acquired{0};
+            std::atomic<size_t> total_released{0};
+            mutable std::shared_mutex mutex;
+
+            GenericResourcePool(std::string n, ResourceType t, const ResourceQuota& q)
+                : name(std::move(n)), type(t), quota(q) {}
+        };
+
+        auto pool = std::make_unique<GenericResourcePool>(pool_name_str, type, quota);
+
+        // Store with type erasure
+        auto deleter = [](void* ptr) {
+            delete static_cast<GenericResourcePool*>(ptr);
+        };
+
+        m_pools[pool_name_str] = std::unique_ptr<void, std::function<void(void*)>>(
+            pool.release(), deleter);
+
+        // Store the resource type for this pool
+        switch (type) {
+            case ResourceType::Thread:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(std::thread)));
+                break;
+            case ResourceType::Timer:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(QTimer)));
+                break;
+            case ResourceType::NetworkConnection:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(void*)));
+                break;
+            case ResourceType::FileHandle:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(void*)));
+                break;
+            case ResourceType::DatabaseConnection:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(void*)));
+                break;
+            case ResourceType::Memory:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(void*)));
+                break;
+            case ResourceType::Custom:
+                m_pool_types.emplace(pool_name_str, std::type_index(typeid(void)));
+                break;
+        }
+
+    } catch (const std::exception& e) {
+        return make_error<void>(PluginErrorCode::ResourceUnavailable,
+                              "Failed to create resource pool: " + std::string(e.what()));
+    } catch (...) {
+        return make_error<void>(PluginErrorCode::ResourceUnavailable,
+                              "Unknown error creating resource pool");
+    }
 
     qCDebug(resourceLog) << "Created resource pool:" << QString::fromStdString(pool_name_str)
                         << "for type:" << QString::fromStdString(resource_type_to_string(type));

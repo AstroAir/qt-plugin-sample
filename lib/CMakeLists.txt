@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 # Optional components
-find_package(Qt6 COMPONENTS Network Widgets Sql QUIET)
+find_package(Qt6 COMPONENTS Network Widgets Sql StateMachine QUIET)
 
 # Library configuration options
 option(QTPLUGIN_BUILD_NETWORK "Build network plugin support" OFF)
@@ -51,6 +51,7 @@ set(QTPLUGIN_CORE_SOURCES
     src/core/plugin_loader.cpp
     src/communication/message_bus.cpp
     src/utils/version.cpp
+    src/utils/error_handling.cpp
     src/security/security_manager.cpp
     src/managers/configuration_manager.cpp
     src/managers/logging_manager.cpp

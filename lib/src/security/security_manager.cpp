@@ -10,8 +10,16 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCryptographicHash>
+#include <QPluginLoader>
+#include <QFile>
+#include <QIODevice>
+#include <QRegularExpression>
+#include <QDebug>
+#include <QLoggingCategory>
 #include <fstream>
 #include <mutex>
+#include <filesystem>
+#include <algorithm>
 
 namespace qtplugin {
 
@@ -255,49 +263,344 @@ SecurityValidationResult SecurityManager::validate_file_integrity(const std::fil
 
 SecurityValidationResult SecurityManager::validate_metadata(const std::filesystem::path& file_path) const {
     SecurityValidationResult result;
+    result.is_valid = false;
 
-    // This is a placeholder - in a real implementation, you would:
-    // 1. Load the plugin metadata
-    // 2. Validate required fields
-    // 3. Check for suspicious metadata
-    // 4. Validate version constraints
-    (void)file_path; // Suppress unused parameter warning
+    try {
+        // Check if file exists
+        if (!std::filesystem::exists(file_path)) {
+            result.errors.push_back("Plugin file does not exist: " + file_path.string());
+            return result;
+        }
 
-    result.is_valid = true;
+        // Load plugin to extract metadata
+        QPluginLoader loader(QString::fromStdString(file_path.string()));
+        QJsonObject metadata = loader.metaData();
+
+        if (metadata.isEmpty()) {
+            result.errors.push_back("Failed to load plugin metadata");
+            return result;
+        }
+
+        // Validate required metadata fields
+        QJsonObject plugin_metadata = metadata["MetaData"].toObject();
+
+        // Check for required fields
+        std::vector<std::string> required_fields = {"name", "version", "author"};
+        for (const auto& field : required_fields) {
+            if (!plugin_metadata.contains(QString::fromStdString(field))) {
+                result.errors.push_back("Missing required metadata field: " + field);
+            }
+        }
+
+        // Validate name field
+        if (plugin_metadata.contains("name")) {
+            QString name = plugin_metadata["name"].toString();
+            if (name.isEmpty()) {
+                result.errors.push_back("Plugin name cannot be empty");
+            } else if (name.length() > 100) {
+                result.warnings.push_back("Plugin name is unusually long (>100 characters)");
+            }
+
+            // Check for suspicious characters in name
+            if (name.contains(QRegularExpression("[<>:\"|?*\\\\]"))) {
+                result.errors.push_back("Plugin name contains invalid characters");
+            }
+        }
+
+        // Validate version field
+        if (plugin_metadata.contains("version")) {
+            QString version = plugin_metadata["version"].toString();
+            if (version.isEmpty()) {
+                result.errors.push_back("Plugin version cannot be empty");
+            } else {
+                // Basic version format validation (semantic versioning)
+                QRegularExpression version_regex("^\\d+\\.\\d+\\.\\d+(?:-[a-zA-Z0-9.-]+)?(?:\\+[a-zA-Z0-9.-]+)?$");
+                if (!version_regex.match(version).hasMatch()) {
+                    result.warnings.push_back("Plugin version does not follow semantic versioning format");
+                }
+            }
+        }
+
+        // Validate author field
+        if (plugin_metadata.contains("author")) {
+            QString author = plugin_metadata["author"].toString();
+            if (author.isEmpty()) {
+                result.warnings.push_back("Plugin author is empty");
+            } else if (author.length() > 200) {
+                result.warnings.push_back("Plugin author field is unusually long");
+            }
+        }
+
+        // Check for suspicious metadata
+        if (plugin_metadata.contains("description")) {
+            QString description = plugin_metadata["description"].toString();
+            if (description.length() > 1000) {
+                result.warnings.push_back("Plugin description is unusually long");
+            }
+        }
+
+        // Validate dependencies if present
+        if (plugin_metadata.contains("dependencies")) {
+            QJsonValue deps = plugin_metadata["dependencies"];
+            if (deps.isArray()) {
+                QJsonArray deps_array = deps.toArray();
+                if (deps_array.size() > 50) {
+                    result.warnings.push_back("Plugin has an unusually large number of dependencies");
+                }
+
+                for (const auto& dep : deps_array) {
+                    if (!dep.isString() || dep.toString().isEmpty()) {
+                        result.errors.push_back("Invalid dependency specification");
+                    }
+                }
+            }
+        }
+
+        // If no errors, validation passed
+        if (result.errors.empty()) {
+            result.is_valid = true;
+            result.validated_level = SecurityLevel::Basic;
+        }
+
+        // Store metadata details
+        result.details["metadata"] = plugin_metadata;
+        result.details["file_path"] = QString::fromStdString(file_path.string());
+
+    } catch (const std::exception& e) {
+        result.errors.push_back("Exception during metadata validation: " + std::string(e.what()));
+    } catch (...) {
+        result.errors.push_back("Unknown exception during metadata validation");
+    }
+
     return result;
 }
 
 SecurityValidationResult SecurityManager::validate_signature(const std::filesystem::path& file_path) const {
     SecurityValidationResult result;
-
-    // This is a placeholder - in a real implementation, you would:
-    // 1. Check for digital signature
-    // 2. Validate signature against trusted certificates
-    // 3. Verify signature integrity
-    (void)file_path; // Suppress unused parameter warning
+    result.is_valid = false;
 
     if (!m_signature_verification_enabled) {
         result.warnings.push_back("Signature verification is disabled");
         result.is_valid = true;
+        result.validated_level = SecurityLevel::Basic;
         return result;
     }
 
-    // For now, just warn that signature verification is not implemented
-    result.warnings.push_back("Signature verification not fully implemented");
-    result.is_valid = true;
+    try {
+        // Check if file exists
+        if (!std::filesystem::exists(file_path)) {
+            result.errors.push_back("Plugin file does not exist for signature validation");
+            return result;
+        }
+
+        // Get file size for validation
+        auto file_size = std::filesystem::file_size(file_path);
+        if (file_size == 0) {
+            result.errors.push_back("Plugin file is empty");
+            return result;
+        }
+
+        // Check for common signature file extensions or embedded signatures
+        std::filesystem::path sig_file = file_path;
+        sig_file.replace_extension(file_path.extension().string() + ".sig");
+
+        bool has_signature_file = std::filesystem::exists(sig_file);
+
+        // Look for embedded signature in plugin metadata
+        QPluginLoader loader(QString::fromStdString(file_path.string()));
+        QJsonObject metadata = loader.metaData();
+        bool has_embedded_signature = false;
+
+        if (!metadata.isEmpty()) {
+            QJsonObject plugin_metadata = metadata["MetaData"].toObject();
+            has_embedded_signature = plugin_metadata.contains("signature") ||
+                                   plugin_metadata.contains("digital_signature") ||
+                                   plugin_metadata.contains("checksum");
+        }
+
+        if (!has_signature_file && !has_embedded_signature) {
+            if (m_security_level >= SecurityLevel::Standard) {
+                result.errors.push_back("No digital signature found for plugin");
+                return result;
+            } else {
+                result.warnings.push_back("No digital signature found for plugin");
+            }
+        }
+
+        // Basic file integrity check using checksum
+        if (has_embedded_signature) {
+            QJsonObject plugin_metadata = metadata["MetaData"].toObject();
+
+            if (plugin_metadata.contains("checksum")) {
+                QString expected_checksum = plugin_metadata["checksum"].toString();
+                if (!expected_checksum.isEmpty()) {
+                    // Calculate actual file checksum (simplified implementation)
+                    QFile file(QString::fromStdString(file_path.string()));
+                    if (file.open(QIODevice::ReadOnly)) {
+                        QCryptographicHash hash(QCryptographicHash::Sha256);
+                        hash.addData(file.readAll());
+                        QString actual_checksum = hash.result().toHex();
+
+                        if (actual_checksum.toLower() != expected_checksum.toLower()) {
+                            result.errors.push_back("File checksum verification failed");
+                            return result;
+                        } else {
+                            result.details["checksum_verified"] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // If we reach here, basic validation passed
+        result.is_valid = true;
+        result.validated_level = has_signature_file || has_embedded_signature ?
+                               SecurityLevel::Standard : SecurityLevel::Basic;
+
+        if (has_signature_file) {
+            result.details["signature_file"] = QString::fromStdString(sig_file.string());
+        }
+        if (has_embedded_signature) {
+            result.details["embedded_signature"] = true;
+        }
+
+    } catch (const std::exception& e) {
+        result.errors.push_back("Exception during signature validation: " + std::string(e.what()));
+    } catch (...) {
+        result.errors.push_back("Unknown exception during signature validation");
+    }
+
     return result;
 }
 
 SecurityValidationResult SecurityManager::validate_permissions(const std::filesystem::path& file_path) const {
     SecurityValidationResult result;
+    result.is_valid = false;
 
-    // This is a placeholder - in a real implementation, you would:
-    // 1. Check file permissions
-    // 2. Validate plugin requested permissions
-    // 3. Check for privilege escalation attempts
-    (void)file_path; // Suppress unused parameter warning
+    try {
+        // Check if file exists
+        if (!std::filesystem::exists(file_path)) {
+            result.errors.push_back("Plugin file does not exist for permission validation");
+            return result;
+        }
 
-    result.is_valid = true;
+        // Check file permissions
+        auto file_status = std::filesystem::status(file_path);
+        auto file_perms = file_status.permissions();
+
+        // Ensure file is readable
+        if ((file_perms & std::filesystem::perms::owner_read) == std::filesystem::perms::none &&
+            (file_perms & std::filesystem::perms::group_read) == std::filesystem::perms::none &&
+            (file_perms & std::filesystem::perms::others_read) == std::filesystem::perms::none) {
+            result.errors.push_back("Plugin file is not readable");
+            return result;
+        }
+
+        // Check for overly permissive permissions
+        if ((file_perms & std::filesystem::perms::others_write) != std::filesystem::perms::none) {
+            result.warnings.push_back("Plugin file is writable by others - potential security risk");
+        }
+
+        // Load plugin metadata to check requested permissions
+        QPluginLoader loader(QString::fromStdString(file_path.string()));
+        QJsonObject metadata = loader.metaData();
+
+        if (!metadata.isEmpty()) {
+            QJsonObject plugin_metadata = metadata["MetaData"].toObject();
+
+            // Check for requested permissions
+            if (plugin_metadata.contains("permissions")) {
+                QJsonValue permissions = plugin_metadata["permissions"];
+
+                if (permissions.isArray()) {
+                    QJsonArray perms_array = permissions.toArray();
+                    std::vector<std::string> dangerous_permissions = {
+                        "file_system_write", "network_access", "system_commands",
+                        "registry_access", "process_creation", "dll_injection"
+                    };
+
+                    for (const auto& perm : perms_array) {
+                        if (perm.isString()) {
+                            std::string perm_str = perm.toString().toStdString();
+
+                            // Check for dangerous permissions
+                            for (const auto& dangerous : dangerous_permissions) {
+                                if (perm_str == dangerous) {
+                                    if (m_security_level >= SecurityLevel::Standard) {
+                                        result.warnings.push_back("Plugin requests dangerous permission: " + perm_str);
+                                    }
+                                }
+                            }
+
+                            // Check for privilege escalation attempts
+                            if (perm_str.find("admin") != std::string::npos ||
+                                perm_str.find("root") != std::string::npos ||
+                                perm_str.find("elevated") != std::string::npos) {
+                                result.errors.push_back("Plugin requests elevated privileges: " + perm_str);
+                                return result;
+                            }
+                        }
+                    }
+
+                    result.details["requested_permissions"] = perms_array;
+                } else if (permissions.isString()) {
+                    result.warnings.push_back("Plugin permissions should be specified as an array");
+                }
+            }
+
+            // Check for suspicious capabilities
+            if (plugin_metadata.contains("capabilities")) {
+                QJsonValue capabilities = plugin_metadata["capabilities"];
+                if (capabilities.isArray()) {
+                    QJsonArray caps_array = capabilities.toArray();
+
+                    for (const auto& cap : caps_array) {
+                        if (cap.isString()) {
+                            std::string cap_str = cap.toString().toStdString();
+
+                            // Check for potentially dangerous capabilities
+                            if (cap_str == "system_access" || cap_str == "unrestricted") {
+                                result.warnings.push_back("Plugin declares potentially dangerous capability: " + cap_str);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check file location - plugins should be in designated directories
+        std::string file_path_str = file_path.string();
+        std::vector<std::string> safe_directories = {
+            "plugins", "extensions", "addons", "lib", "libraries"
+        };
+
+        bool in_safe_directory = false;
+        for (const auto& safe_dir : safe_directories) {
+            if (file_path_str.find(safe_dir) != std::string::npos) {
+                in_safe_directory = true;
+                break;
+            }
+        }
+
+        if (!in_safe_directory) {
+            result.warnings.push_back("Plugin is not located in a standard plugin directory");
+        }
+
+        // If we reach here, validation passed
+        result.is_valid = true;
+        result.validated_level = SecurityLevel::Basic;
+
+        // Upgrade security level based on checks
+        if (result.warnings.empty()) {
+            result.validated_level = SecurityLevel::Standard;
+        }
+
+    } catch (const std::exception& e) {
+        result.errors.push_back("Exception during permission validation: " + std::string(e.what()));
+    } catch (...) {
+        result.errors.push_back("Unknown exception during permission validation");
+    }
+
     return result;
 }
 

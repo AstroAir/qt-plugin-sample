@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "qtplugin/qtplugin.hpp"
+#include <qtplugin/qtplugin.hpp>
 #include <QObject>
 #include <QTimer>
 #include <QJsonObject>
@@ -33,21 +33,29 @@ public:
     explicit ConfigurationExamplePlugin(QObject* parent = nullptr);
     ~ConfigurationExamplePlugin() override;
 
-    // IPlugin interface
-    QString id() const override;
-    QString name() const override;
-    QString description() const override;
-    qtplugin::Version version() const override;
-    QStringList dependencies() const override;
+    // IPlugin interface - Metadata
+    std::string_view name() const noexcept override;
+    std::string_view description() const noexcept override;
+    qtplugin::Version version() const noexcept override;
+    std::string_view author() const noexcept override;
+    std::string id() const noexcept override;
 
-    qtplugin::expected<void, qtplugin::PluginError> initialize(qtplugin::IPluginManager* manager) override;
+    // IPlugin interface - Lifecycle
+    qtplugin::expected<void, qtplugin::PluginError> initialize() override;
+    void shutdown() noexcept override;
+    qtplugin::PluginState state() const noexcept override;
+
+    // IPlugin interface - Configuration
     qtplugin::expected<void, qtplugin::PluginError> configure(const QJsonObject& config) override;
-    qtplugin::expected<void, qtplugin::PluginError> start() override;
-    qtplugin::expected<void, qtplugin::PluginError> stop() override;
-    qtplugin::expected<void, qtplugin::PluginError> cleanup() override;
 
-    qtplugin::PluginState state() const override;
-    QJsonObject status() const override;
+    // IPlugin interface - Capabilities and Commands
+    qtplugin::PluginCapabilities capabilities() const noexcept override;
+    qtplugin::expected<QJsonObject, qtplugin::PluginError>
+    execute_command(std::string_view command, const QJsonObject& params = {}) override;
+    std::vector<std::string> available_commands() const override;
+
+    // IPlugin interface - Dependencies
+    std::vector<std::string> dependencies() const override;
 
 public slots:
     /**
@@ -80,25 +88,22 @@ public slots:
      */
     void demonstrateConfigurationNotifications();
 
-private slots:
     /**
      * @brief Handle configuration change events
      */
     void onConfigurationChanged(const qtplugin::ConfigurationChangeEvent& event);
-    
+
+private slots:
     /**
      * @brief Periodic demonstration timer
      */
     void onDemonstrationTimer();
 
 private:
-    qtplugin::IPluginManager* m_manager = nullptr;
-    qtplugin::IConfigurationManager* m_config_manager = nullptr;
     qtplugin::PluginState m_state = qtplugin::PluginState::Unloaded;
-    
+
     std::unique_ptr<QTimer> m_demo_timer;
     int m_demo_step = 0;
-    std::string m_change_subscription_id;
     
     /**
      * @brief Set up configuration schema for validation

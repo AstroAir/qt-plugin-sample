@@ -6,6 +6,7 @@
 
 #include "../../include/qtplugin/core/plugin_manager.hpp"
 #include "../../include/qtplugin/core/plugin_loader.hpp"
+#include "../../include/qtplugin/core/service_plugin_interface.hpp"
 #include "../../include/qtplugin/communication/message_bus.hpp"
 #include "../../include/qtplugin/security/security_manager.hpp"
 #include "../../include/qtplugin/managers/configuration_manager_impl.hpp"
@@ -19,8 +20,12 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
+#include <QLoggingCategory>
+#include <QDebug>
 #include <algorithm>
 #include <fstream>
+
+Q_LOGGING_CATEGORY(pluginLog, "qtplugin.manager")
 
 namespace qtplugin {
 
@@ -258,6 +263,34 @@ std::vector<std::string> PluginManager::loaded_plugins() const {
     return plugin_ids;
 }
 
+std::vector<PluginInfo> PluginManager::all_plugin_info() const {
+    std::shared_lock lock(m_plugins_mutex);
+    std::vector<PluginInfo> plugin_infos;
+    plugin_infos.reserve(m_plugins.size());
+
+    for (const auto& [id, info] : m_plugins) {
+        if (info) {
+            // Create a copy without the unique_ptr members
+            PluginInfo copy_info;
+            copy_info.id = info->id;
+            copy_info.file_path = info->file_path;
+            copy_info.metadata = info->metadata;
+            copy_info.state = info->state;
+            copy_info.load_time = info->load_time;
+            copy_info.last_activity = info->last_activity;
+            copy_info.instance = info->instance;
+            copy_info.configuration = info->configuration;
+            copy_info.error_log = info->error_log;
+            copy_info.metrics = info->metrics;
+            copy_info.hot_reload_enabled = info->hot_reload_enabled;
+
+            plugin_infos.push_back(std::move(copy_info));
+        }
+    }
+
+    return plugin_infos;
+}
+
 std::vector<std::filesystem::path> PluginManager::discover_plugins(const std::filesystem::path& directory,
                                                                   bool recursive) const {
     std::vector<std::filesystem::path> discovered_plugins;
@@ -367,15 +400,90 @@ qtplugin::expected<void, PluginError> PluginManager::check_plugin_dependencies(c
 }
 
 void PluginManager::update_dependency_graph() {
-    // This is a placeholder for dependency graph updates
-    // In a real implementation, you would analyze plugin dependencies
-    // and create a proper dependency graph
+    std::unique_lock lock(m_plugins_mutex);
+
+    // Clear existing dependency graph
+    m_dependency_graph.clear();
+
+    // Build dependency graph from loaded plugins
+    for (const auto& [plugin_id, plugin_info] : m_plugins) {
+        if (!plugin_info || !plugin_info->instance) {
+            continue;
+        }
+
+        DependencyNode node;
+        node.plugin_id = plugin_id;
+
+        // Convert vector to unordered_set
+        for (const auto& dep : plugin_info->metadata.dependencies) {
+            node.dependencies.insert(dep);
+        }
+        node.dependents.clear();
+
+        // Set load order based on dependency count (will be refined later)
+        node.load_order = static_cast<int>(plugin_info->metadata.dependencies.size());
+
+        m_dependency_graph[plugin_id] = std::move(node);
+    }
+
+    // Build reverse dependencies (dependents)
+    for (auto& [plugin_id, node] : m_dependency_graph) {
+        for (const auto& dependency : node.dependencies) {
+            auto dep_it = m_dependency_graph.find(dependency);
+            if (dep_it != m_dependency_graph.end()) {
+                dep_it->second.dependents.insert(plugin_id);
+            }
+        }
+    }
+
+    // Validate for circular dependencies
+    detect_circular_dependencies();
 }
 
 void PluginManager::update_plugin_metrics(const std::string& plugin_id) {
-    // This is a placeholder for metrics updates
-    // In a real implementation, you would collect performance metrics
-    Q_UNUSED(plugin_id)
+    std::unique_lock lock(m_plugins_mutex);
+
+    auto it = m_plugins.find(plugin_id);
+    if (it == m_plugins.end() || !it->second || !it->second->instance) {
+        return;
+    }
+
+    auto& plugin_info = it->second;
+    auto& metrics = plugin_info->metrics;
+
+    // Update basic metrics
+    auto now = std::chrono::system_clock::now();
+    plugin_info->last_activity = now;
+
+    // Calculate uptime
+    auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now - plugin_info->load_time).count();
+    metrics["uptime_ms"] = static_cast<qint64>(uptime_ms);
+
+    // Update activity timestamp
+    metrics["last_activity"] = QString::number(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch()).count());
+
+    // Get plugin-specific metrics if available
+    try {
+        if (plugin_info->instance->capabilities() & static_cast<PluginCapabilities>(PluginCapability::Monitoring)) {
+            // Try to get metrics from plugin
+            auto plugin_metrics_result = plugin_info->instance->execute_command("get_metrics");
+            if (plugin_metrics_result) {
+                metrics["plugin_metrics"] = plugin_metrics_result.value();
+            }
+        }
+    } catch (...) {
+        // Ignore errors in metrics collection
+    }
+
+    // Update error count
+    metrics["error_count"] = static_cast<int>(plugin_info->error_log.size());
+
+    // Update state information
+    metrics["state"] = static_cast<int>(plugin_info->state);
+    metrics["state_name"] = QString::fromStdString(plugin_state_to_string(plugin_info->state));
 }
 
 // === Missing Method Implementations ===
@@ -384,11 +492,86 @@ QJsonObject PluginManager::system_metrics() const {
     std::shared_lock lock(m_plugins_mutex);
 
     QJsonObject metrics;
-    metrics["total_plugins"] = static_cast<int>(m_plugins.size());
-    metrics["loaded_plugins"] = static_cast<int>(m_plugins.size());
-    metrics["failed_plugins"] = 0; // TODO: Track failed plugins
-    metrics["memory_usage"] = 0; // TODO: Calculate memory usage
-    metrics["uptime"] = 0; // TODO: Track uptime
+
+    // Count plugins by state
+    int total_plugins = 0;
+    int loaded_plugins = 0;
+    int failed_plugins = 0;
+    int unloaded_plugins = 0;
+    int initializing_plugins = 0;
+
+    for (const auto& [id, plugin_info] : m_plugins) {
+        total_plugins++;
+        if (plugin_info) {
+            switch (plugin_info->state) {
+                case PluginState::Loaded:
+                case PluginState::Running:
+                    loaded_plugins++;
+                    break;
+                case PluginState::Error:
+                    failed_plugins++;
+                    break;
+                case PluginState::Unloaded:
+                case PluginState::Stopped:
+                    unloaded_plugins++;
+                    break;
+                case PluginState::Initializing:
+                case PluginState::Loading:
+                    initializing_plugins++;
+                    break;
+                case PluginState::Paused:
+                case PluginState::Stopping:
+                case PluginState::Reloading:
+                    // Count as loaded but not fully operational
+                    loaded_plugins++;
+                    break;
+            }
+        }
+    }
+
+    metrics["total_plugins"] = total_plugins;
+    metrics["loaded_plugins"] = loaded_plugins;
+    metrics["failed_plugins"] = failed_plugins;
+    metrics["unloaded_plugins"] = unloaded_plugins;
+    metrics["initializing_plugins"] = initializing_plugins;
+
+    // Calculate memory usage (basic estimation)
+    size_t estimated_memory = 0;
+    for (const auto& [id, plugin_info] : m_plugins) {
+        if (plugin_info) {
+            // Basic estimation: plugin info + metadata + configuration
+            estimated_memory += sizeof(PluginInfo);
+            estimated_memory += plugin_info->metadata.name.size();
+            estimated_memory += plugin_info->metadata.description.size();
+            estimated_memory += plugin_info->error_log.size() * 100; // Rough estimate
+        }
+    }
+    metrics["estimated_memory_bytes"] = static_cast<qint64>(estimated_memory);
+
+    // System uptime (time since first plugin was loaded)
+    if (!m_plugins.empty()) {
+        auto earliest_load_time = std::chrono::system_clock::now();
+        for (const auto& [id, plugin_info] : m_plugins) {
+            if (plugin_info && plugin_info->load_time < earliest_load_time) {
+                earliest_load_time = plugin_info->load_time;
+            }
+        }
+
+        auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now() - earliest_load_time).count();
+        metrics["system_uptime_ms"] = static_cast<qint64>(uptime_ms);
+    } else {
+        metrics["system_uptime_ms"] = 0;
+    }
+
+    // Monitoring status
+    metrics["monitoring_active"] = m_monitoring_active.load();
+
+    // Security level
+    metrics["security_level"] = static_cast<int>(m_security_level);
+
+    // Dependency graph stats
+    metrics["dependency_nodes"] = static_cast<int>(m_dependency_graph.size());
 
     return metrics;
 }
@@ -408,6 +591,62 @@ void PluginManager::shutdown_all_plugins() {
     }
 
     m_plugins.clear();
+}
+
+int PluginManager::start_all_services() {
+    std::shared_lock lock(m_plugins_mutex);
+    int started_count = 0;
+
+    for (auto& [id, info] : m_plugins) {
+        if (info && info->instance) {
+            // Check if plugin has Service capability
+            auto capabilities = info->metadata.capabilities;
+            if (capabilities & static_cast<uint32_t>(PluginCapability::Service)) {
+                // Try to cast to service plugin and start it
+                auto service_plugin = std::dynamic_pointer_cast<IServicePlugin>(info->instance);
+                if (service_plugin) {
+                    try {
+                        auto result = service_plugin->start_service();
+                        if (result) {
+                            started_count++;
+                        }
+                    } catch (...) {
+                        // Log error but continue with other services
+                    }
+                }
+            }
+        }
+    }
+
+    return started_count;
+}
+
+int PluginManager::stop_all_services() {
+    std::shared_lock lock(m_plugins_mutex);
+    int stopped_count = 0;
+
+    for (auto& [id, info] : m_plugins) {
+        if (info && info->instance) {
+            // Check if plugin has Service capability
+            auto capabilities = info->metadata.capabilities;
+            if (capabilities & static_cast<uint32_t>(PluginCapability::Service)) {
+                // Try to cast to service plugin and stop it
+                auto service_plugin = std::dynamic_pointer_cast<IServicePlugin>(info->instance);
+                if (service_plugin) {
+                    try {
+                        auto result = service_plugin->stop_service();
+                        if (result) {
+                            stopped_count++;
+                        }
+                    } catch (...) {
+                        // Log error but continue with other services
+                    }
+                }
+            }
+        }
+    }
+
+    return stopped_count;
 }
 
 qtplugin::expected<void, PluginError> PluginManager::enable_hot_reload(std::string_view plugin_id) {
@@ -472,7 +711,29 @@ qtplugin::expected<void, PluginError> PluginManager::reload_plugin(std::string_v
     // Save state if requested
     QJsonObject saved_state;
     if (preserve_state && it->second->instance) {
-        // TODO: Implement state preservation
+        try {
+            // Try to get state from plugin using standard command
+            auto state_result = it->second->instance->execute_command("save_state");
+            if (state_result) {
+                saved_state = state_result.value();
+            } else {
+                // Fallback: save current configuration as state
+                saved_state = it->second->configuration;
+                saved_state["_fallback_state"] = true;
+            }
+
+            // Also save plugin metrics and runtime information
+            saved_state["_runtime_info"] = QJsonObject{
+                {"load_time", QString::number(std::chrono::duration_cast<std::chrono::milliseconds>(
+                    it->second->load_time.time_since_epoch()).count())},
+                {"last_activity", QString::number(std::chrono::duration_cast<std::chrono::milliseconds>(
+                    it->second->last_activity.time_since_epoch()).count())},
+                {"error_count", static_cast<int>(it->second->error_log.size())}
+            };
+        } catch (...) {
+            qCWarning(pluginLog) << "Failed to save state for plugin:"
+                                << QString::fromStdString(std::string(plugin_id));
+        }
     }
 
     // Unload current plugin
@@ -496,7 +757,45 @@ qtplugin::expected<void, PluginError> PluginManager::reload_plugin(std::string_v
 
     // Restore state if requested
     if (preserve_state && !saved_state.isEmpty()) {
-        // TODO: Implement state restoration
+        try {
+            // Check if this was a fallback state save
+            bool is_fallback = saved_state.contains("_fallback_state") &&
+                             saved_state["_fallback_state"].toBool();
+
+            if (is_fallback) {
+                // Restore configuration
+                QJsonObject config = saved_state;
+                config.remove("_fallback_state");
+                config.remove("_runtime_info");
+
+                auto config_result = it->second->instance->configure(config);
+                if (!config_result) {
+                    qCWarning(pluginLog) << "Failed to restore configuration for plugin:"
+                                        << QString::fromStdString(std::string(plugin_id));
+                }
+            } else {
+                // Try to restore state using standard command
+                auto restore_result = it->second->instance->execute_command("restore_state", saved_state);
+                if (!restore_result) {
+                    qCWarning(pluginLog) << "Failed to restore state for plugin:"
+                                        << QString::fromStdString(std::string(plugin_id));
+
+                    // Fallback: try to restore as configuration
+                    auto config_result = it->second->instance->configure(saved_state);
+                    if (!config_result) {
+                        qCWarning(pluginLog) << "Failed to restore state as configuration for plugin:"
+                                            << QString::fromStdString(std::string(plugin_id));
+                    }
+                }
+            }
+
+            // Update plugin info with restored state
+            it->second->configuration = saved_state;
+
+        } catch (...) {
+            qCWarning(pluginLog) << "Exception during state restoration for plugin:"
+                                << QString::fromStdString(std::string(plugin_id));
+        }
     }
 
     return make_success();
@@ -602,6 +901,78 @@ IResourceLifecycleManager& PluginManager::resource_lifecycle_manager() const {
 
 IResourceMonitor& PluginManager::resource_monitor() const {
     return *m_resource_monitor;
+}
+
+// === Helper Methods ===
+
+int PluginManager::calculate_dependency_level(const std::string& plugin_id,
+                                            const std::vector<std::string>& dependencies) const {
+    if (dependencies.empty()) {
+        return 0;
+    }
+
+    int max_level = 0;
+    for (const auto& dep : dependencies) {
+        auto it = m_plugins.find(dep);
+        if (it != m_plugins.end() && it->second) {
+            int dep_level = calculate_dependency_level(dep, it->second->metadata.dependencies);
+            max_level = std::max(max_level, dep_level + 1);
+        }
+    }
+
+    return max_level;
+}
+
+void PluginManager::detect_circular_dependencies() const {
+    std::unordered_set<std::string> visited;
+    std::unordered_set<std::string> recursion_stack;
+
+    for (const auto& [plugin_id, node] : m_dependency_graph) {
+        if (visited.find(plugin_id) == visited.end()) {
+            if (has_circular_dependency(plugin_id, visited, recursion_stack)) {
+                qCWarning(pluginLog) << "Circular dependency detected involving plugin:"
+                                    << QString::fromStdString(plugin_id);
+            }
+        }
+    }
+}
+
+bool PluginManager::has_circular_dependency(const std::string& plugin_id,
+                                          std::unordered_set<std::string>& visited,
+                                          std::unordered_set<std::string>& recursion_stack) const {
+    visited.insert(plugin_id);
+    recursion_stack.insert(plugin_id);
+
+    auto it = m_dependency_graph.find(plugin_id);
+    if (it != m_dependency_graph.end()) {
+        for (const auto& dep : it->second.dependencies) {
+            if (recursion_stack.find(dep) != recursion_stack.end()) {
+                return true; // Circular dependency found
+            }
+
+            if (visited.find(dep) == visited.end()) {
+                if (has_circular_dependency(dep, visited, recursion_stack)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    recursion_stack.erase(plugin_id);
+    return false;
+}
+
+std::string PluginManager::plugin_state_to_string(PluginState state) const {
+    switch (state) {
+        case PluginState::Unloaded: return "Unloaded";
+        case PluginState::Loading: return "Loading";
+        case PluginState::Loaded: return "Loaded";
+        case PluginState::Initializing: return "Initializing";
+        case PluginState::Running: return "Running";
+        case PluginState::Stopping: return "Stopping";
+        case PluginState::Error: return "Error";
+        default: return "Unknown";
+    }
 }
 
 } // namespace qtplugin

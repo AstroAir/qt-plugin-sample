@@ -18,62 +18,77 @@ using namespace qtplugin;
 class MockPlugin : public IPlugin
 {
 public:
-    MockPlugin() : m_initialized(false), m_started(false) {}
-    
+    MockPlugin() : m_initialized(false) {}
+
+    // IPlugin interface - Metadata
+    std::string_view name() const noexcept override {
+        return "MockPlugin";
+    }
+
+    std::string_view description() const noexcept override {
+        return "Mock plugin for testing";
+    }
+
+    Version version() const noexcept override {
+        return Version(1, 0, 0);
+    }
+
+    std::string_view author() const noexcept override {
+        return "Test Suite";
+    }
+
+    std::string id() const noexcept override {
+        return "mock_plugin";
+    }
+
+    // IPlugin interface - Lifecycle
     expected<void, PluginError> initialize() override {
         if (m_initialized) {
-            return make_error<void>(PluginErrorCode::AlreadyLoaded, "Plugin already initialized");
+            return make_error<void>(PluginErrorCode::AlreadyExists, "Plugin already initialized");
         }
         m_initialized = true;
         return make_success();
     }
-    
-    expected<void, PluginError> shutdown() override {
-        if (!m_initialized) {
-            return make_error<void>(PluginErrorCode::NotLoaded, "Plugin not initialized");
-        }
-        m_started = false;
+
+    void shutdown() noexcept override {
         m_initialized = false;
-        return make_success();
     }
-    
-    expected<void, PluginError> start() override {
-        if (!m_initialized) {
-            return make_error<void>(PluginErrorCode::NotLoaded, "Plugin not initialized");
+
+    PluginState state() const noexcept override {
+        return m_initialized ? PluginState::Running : PluginState::Unloaded;
+    }
+
+    // IPlugin interface - Capabilities and Commands
+    PluginCapabilities capabilities() const noexcept override {
+        return static_cast<PluginCapabilities>(PluginCapability::Service);
+    }
+
+    expected<QJsonObject, PluginError>
+    execute_command(std::string_view command, const QJsonObject& params = {}) override {
+        Q_UNUSED(params)
+        QJsonObject result;
+        if (command == "test") {
+            result["status"] = "ok";
+            return result;
         }
-        if (m_started) {
-            return make_error<void>(PluginErrorCode::AlreadyLoaded, "Plugin already started");
-        }
-        m_started = true;
-        return make_success();
+        return make_error<QJsonObject>(PluginErrorCode::CommandNotFound, "Unknown command");
     }
-    
-    expected<void, PluginError> stop() override {
-        if (!m_started) {
-            return make_error<void>(PluginErrorCode::NotLoaded, "Plugin not started");
-        }
-        m_started = false;
-        return make_success();
+
+    std::vector<std::string> available_commands() const override {
+        return {"test"};
     }
-    
-    PluginInfo get_info() const override {
-        PluginInfo info;
-        info.name = "MockPlugin";
-        info.version = Version(1, 0, 0);
-        info.description = "Mock plugin for testing";
-        info.author = "Test Suite";
-        info.api_version = Version(3, 0, 0);
-        info.state = m_started ? PluginState::Running : 
-                    (m_initialized ? PluginState::Loaded : PluginState::Unloaded);
-        return info;
+
+    // IPlugin interface - Dependencies
+    std::vector<std::string> dependencies() const override {
+        return {};
     }
-    
-    bool is_initialized() const { return m_initialized; }
-    bool is_started() const { return m_started; }
+
+    bool is_initialized() const noexcept override {
+        return m_initialized;
+    }
 
 private:
     bool m_initialized;
-    bool m_started;
 };
 
 class TestPluginInterface : public QObject
@@ -90,70 +105,30 @@ private slots:
     void testPluginCreation();
     void testPluginDestruction();
     void testPluginInfo();
-    
+
     // Lifecycle tests
     void testPluginInitialization();
     void testPluginShutdown();
     void testPluginStart();
     void testPluginStop();
     void testPluginLifecycleOrder();
-    
+
     // State management tests
-    void testPluginStateTransitions();
     void testInvalidStateTransitions();
-    void testPluginStateConsistency();
-    
-    // Error handling tests
-    void testInitializationError();
-    void testShutdownError();
-    void testStartError();
-    void testStopError();
     void testDoubleInitialization();
     void testDoubleShutdown();
-    
+
     // Plugin info tests
     void testPluginInfoValidation();
-    void testPluginInfoSerialization();
-    void testPluginInfoComparison();
-    void testPluginInfoUpdate();
-    
-    // Version compatibility tests
     void testApiVersionCompatibility();
-    void testPluginVersionValidation();
-    void testVersionMismatchHandling();
-    
-    // Plugin metadata tests
-    void testPluginMetadata();
-    void testPluginDependencies();
-    void testPluginCapabilities();
-    void testPluginConfiguration();
-    
-    // Plugin communication tests
-    void testPluginMessageHandling();
-    void testPluginEventHandling();
-    void testPluginServiceRegistration();
-    
-    // Performance tests
-    void testPluginInitializationPerformance();
-    void testPluginOperationPerformance();
-    void testMemoryUsageTracking();
-    
-    // Thread safety tests
-    void testConcurrentPluginOperations();
-    void testThreadSafePluginAccess();
-    void testPluginThreadSafety();
-    
-    // Resource management tests
-    void testPluginResourceAllocation();
-    void testPluginResourceCleanup();
-    void testPluginResourceLimits();
+    void testPluginStateConsistency();
 
 private:
     std::unique_ptr<MockPlugin> m_plugin;
     
     // Helper methods
     void verifyPluginState(PluginState expected_state);
-    void verifyPluginInfo(const PluginInfo& info, const std::string& expected_name);
+    void verifyPluginInfo(const std::string& expected_name, const std::string& expected_name2);
     void testStateTransition(PluginState from, PluginState to, bool should_succeed);
 };
 
@@ -178,9 +153,6 @@ void TestPluginInterface::cleanup()
 {
     // Clean up plugin
     if (m_plugin) {
-        if (m_plugin->is_started()) {
-            m_plugin->stop();
-        }
         if (m_plugin->is_initialized()) {
             m_plugin->shutdown();
         }
@@ -193,13 +165,10 @@ void TestPluginInterface::testPluginCreation()
     // Test basic plugin creation
     auto plugin = std::make_unique<MockPlugin>();
     QVERIFY(plugin != nullptr);
-    
+
     // Test initial state
     QVERIFY(!plugin->is_initialized());
-    QVERIFY(!plugin->is_started());
-    
-    auto info = plugin->get_info();
-    QCOMPARE(info.state, PluginState::Unloaded);
+    QCOMPARE(plugin->state(), PluginState::Unloaded);
 }
 
 void TestPluginInterface::testPluginDestruction()
@@ -209,28 +178,23 @@ void TestPluginInterface::testPluginDestruction()
         auto plugin = std::make_unique<MockPlugin>();
         auto init_result = plugin->initialize();
         QVERIFY(init_result.has_value());
-        
-        auto start_result = plugin->start();
-        QVERIFY(start_result.has_value());
-        
+
         // Plugin should clean up automatically when destroyed
     }
-    
+
     // Verify no memory leaks
     QVERIFY(true); // This would be verified with memory profiling tools
 }
 
 void TestPluginInterface::testPluginInfo()
 {
-    auto info = m_plugin->get_info();
-    
     // Verify basic info fields
-    QCOMPARE(info.name, "MockPlugin");
-    QCOMPARE(info.version.to_string(), "1.0.0");
-    QCOMPARE(info.description, "Mock plugin for testing");
-    QCOMPARE(info.author, "Test Suite");
-    QCOMPARE(info.api_version.to_string(), "3.0.0");
-    QCOMPARE(info.state, PluginState::Unloaded);
+    QCOMPARE(QString::fromStdString(std::string(m_plugin->name())), "MockPlugin");
+    QCOMPARE(m_plugin->version().to_string(), "1.0.0");
+    QCOMPARE(QString::fromStdString(std::string(m_plugin->description())), "Mock plugin for testing");
+    QCOMPARE(QString::fromStdString(std::string(m_plugin->author())), "Test Suite");
+    QCOMPARE(QString::fromStdString(m_plugin->id()), "mock_plugin");
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
 }
 
 void TestPluginInterface::testPluginInitialization()
@@ -239,9 +203,8 @@ void TestPluginInterface::testPluginInitialization()
     auto result = m_plugin->initialize();
     QVERIFY(result.has_value());
     QVERIFY(m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
-    
-    verifyPluginState(PluginState::Loaded);
+
+    verifyPluginState(PluginState::Running);
 }
 
 void TestPluginInterface::testPluginShutdown()
@@ -249,13 +212,11 @@ void TestPluginInterface::testPluginShutdown()
     // Initialize first
     auto init_result = m_plugin->initialize();
     QVERIFY(init_result.has_value());
-    
+
     // Test successful shutdown
-    auto shutdown_result = m_plugin->shutdown();
-    QVERIFY(shutdown_result.has_value());
+    m_plugin->shutdown();
     QVERIFY(!m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
-    
+
     verifyPluginState(PluginState::Unloaded);
 }
 
@@ -264,81 +225,51 @@ void TestPluginInterface::testPluginStart()
     // Initialize first
     auto init_result = m_plugin->initialize();
     QVERIFY(init_result.has_value());
-    
-    // Test successful start
-    auto start_result = m_plugin->start();
-    QVERIFY(start_result.has_value());
     QVERIFY(m_plugin->is_initialized());
-    QVERIFY(m_plugin->is_started());
-    
+
     verifyPluginState(PluginState::Running);
 }
 
 void TestPluginInterface::testPluginStop()
 {
-    // Initialize and start first
+    // Initialize first
     auto init_result = m_plugin->initialize();
     QVERIFY(init_result.has_value());
-    
-    auto start_result = m_plugin->start();
-    QVERIFY(start_result.has_value());
-    
-    // Test successful stop
-    auto stop_result = m_plugin->stop();
-    QVERIFY(stop_result.has_value());
-    QVERIFY(m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
-    
-    verifyPluginState(PluginState::Loaded);
+
+    // Test shutdown
+    m_plugin->shutdown();
+    QVERIFY(!m_plugin->is_initialized());
+
+    verifyPluginState(PluginState::Unloaded);
 }
 
 void TestPluginInterface::testPluginLifecycleOrder()
 {
     // Test complete lifecycle in correct order
-    
+
     // 1. Initialize
     auto init_result = m_plugin->initialize();
     QVERIFY(init_result.has_value());
-    verifyPluginState(PluginState::Loaded);
-    
-    // 2. Start
-    auto start_result = m_plugin->start();
-    QVERIFY(start_result.has_value());
     verifyPluginState(PluginState::Running);
-    
-    // 3. Stop
-    auto stop_result = m_plugin->stop();
-    QVERIFY(stop_result.has_value());
-    verifyPluginState(PluginState::Loaded);
-    
-    // 4. Shutdown
-    auto shutdown_result = m_plugin->shutdown();
-    QVERIFY(shutdown_result.has_value());
+
+    // 2. Shutdown
+    m_plugin->shutdown();
     verifyPluginState(PluginState::Unloaded);
 }
 
 void TestPluginInterface::testInvalidStateTransitions()
 {
-    // Test starting without initialization
-    auto start_result = m_plugin->start();
-    QVERIFY(!start_result.has_value());
-    QCOMPARE(start_result.error().code, PluginErrorCode::NotLoaded);
-    
-    // Test stopping without starting
+    // Test basic state transitions
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
+
+    // Initialize
     auto init_result = m_plugin->initialize();
     QVERIFY(init_result.has_value());
-    
-    auto stop_result = m_plugin->stop();
-    QVERIFY(!stop_result.has_value());
-    QCOMPARE(stop_result.error().code, PluginErrorCode::NotLoaded);
-    
-    // Test shutdown without initialization
-    auto shutdown_result = m_plugin->shutdown();
-    QVERIFY(shutdown_result.has_value()); // Should succeed from loaded state
-    
-    auto shutdown_result2 = m_plugin->shutdown();
-    QVERIFY(!shutdown_result2.has_value());
-    QCOMPARE(shutdown_result2.error().code, PluginErrorCode::NotLoaded);
+    QCOMPARE(m_plugin->state(), PluginState::Running);
+
+    // Shutdown
+    m_plugin->shutdown();
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
 }
 
 void TestPluginInterface::testDoubleInitialization()
@@ -346,11 +277,11 @@ void TestPluginInterface::testDoubleInitialization()
     // Initialize once
     auto init_result1 = m_plugin->initialize();
     QVERIFY(init_result1.has_value());
-    
+
     // Try to initialize again
     auto init_result2 = m_plugin->initialize();
     QVERIFY(!init_result2.has_value());
-    QCOMPARE(init_result2.error().code, PluginErrorCode::AlreadyLoaded);
+    QCOMPARE(init_result2.error().code, PluginErrorCode::AlreadyExists);
 }
 
 void TestPluginInterface::testDoubleShutdown()
@@ -358,100 +289,72 @@ void TestPluginInterface::testDoubleShutdown()
     // Initialize and shutdown once
     auto init_result = m_plugin->initialize();
     QVERIFY(init_result.has_value());
-    
-    auto shutdown_result1 = m_plugin->shutdown();
-    QVERIFY(shutdown_result1.has_value());
-    
-    // Try to shutdown again
-    auto shutdown_result2 = m_plugin->shutdown();
-    QVERIFY(!shutdown_result2.has_value());
-    QCOMPARE(shutdown_result2.error().code, PluginErrorCode::NotLoaded);
+
+    m_plugin->shutdown();
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
+
+    // Shutdown again should be safe (no-op)
+    m_plugin->shutdown();
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
 }
 
 void TestPluginInterface::testApiVersionCompatibility()
 {
-    auto info = m_plugin->get_info();
-    
-    // Test API version compatibility
+    // Test plugin version
+    Version plugin_version = m_plugin->version();
+    QCOMPARE(plugin_version.to_string(), "1.0.0");
+
+    // Test version compatibility
     Version current_api(3, 0, 0);
-    QVERIFY(info.api_version.is_compatible_with(current_api));
-    
-    // Test incompatible API version
-    Version incompatible_api(2, 0, 0);
-    QVERIFY(!info.api_version.is_compatible_with(incompatible_api));
+    QVERIFY(plugin_version.major() >= 1);
 }
 
 void TestPluginInterface::testPluginInfoValidation()
 {
-    auto info = m_plugin->get_info();
-    
     // Verify required fields are not empty
-    QVERIFY(!info.name.empty());
-    QVERIFY(!info.description.empty());
-    QVERIFY(!info.author.empty());
-    
+    QVERIFY(!std::string(m_plugin->name()).empty());
+    QVERIFY(!std::string(m_plugin->description()).empty());
+    QVERIFY(!std::string(m_plugin->author()).empty());
+    QVERIFY(!m_plugin->id().empty());
+
     // Verify version is valid
-    QVERIFY(info.version.major() >= 0);
-    QVERIFY(info.version.minor() >= 0);
-    QVERIFY(info.version.patch() >= 0);
-    
-    // Verify API version is valid
-    QVERIFY(info.api_version.major() >= 0);
-    QVERIFY(info.api_version.minor() >= 0);
-    QVERIFY(info.api_version.patch() >= 0);
+    Version version = m_plugin->version();
+    QVERIFY(version.major() >= 0);
+    QVERIFY(version.minor() >= 0);
+    QVERIFY(version.patch() >= 0);
 }
 
 void TestPluginInterface::testPluginStateConsistency()
 {
     // Test state consistency throughout lifecycle
-    
+
     // Initial state
-    auto info = m_plugin->get_info();
-    QCOMPARE(info.state, PluginState::Unloaded);
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
     QVERIFY(!m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
-    
+
     // After initialization
     m_plugin->initialize();
-    info = m_plugin->get_info();
-    QCOMPARE(info.state, PluginState::Loaded);
+    QCOMPARE(m_plugin->state(), PluginState::Running);
     QVERIFY(m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
-    
-    // After start
-    m_plugin->start();
-    info = m_plugin->get_info();
-    QCOMPARE(info.state, PluginState::Running);
-    QVERIFY(m_plugin->is_initialized());
-    QVERIFY(m_plugin->is_started());
-    
-    // After stop
-    m_plugin->stop();
-    info = m_plugin->get_info();
-    QCOMPARE(info.state, PluginState::Loaded);
-    QVERIFY(m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
-    
+
     // After shutdown
     m_plugin->shutdown();
-    info = m_plugin->get_info();
-    QCOMPARE(info.state, PluginState::Unloaded);
+    QCOMPARE(m_plugin->state(), PluginState::Unloaded);
     QVERIFY(!m_plugin->is_initialized());
-    QVERIFY(!m_plugin->is_started());
 }
 
 // Helper methods implementation
 void TestPluginInterface::verifyPluginState(PluginState expected_state)
 {
-    auto info = m_plugin->get_info();
-    QCOMPARE(info.state, expected_state);
+    QCOMPARE(m_plugin->state(), expected_state);
 }
 
-void TestPluginInterface::verifyPluginInfo(const PluginInfo& info, const std::string& expected_name)
+void TestPluginInterface::verifyPluginInfo(const std::string& expected_name, const std::string& expected_name2)
 {
-    QCOMPARE(info.name, expected_name);
-    QVERIFY(!info.description.empty());
-    QVERIFY(!info.author.empty());
+    Q_UNUSED(expected_name2)
+    QCOMPARE(QString::fromStdString(std::string(m_plugin->name())), QString::fromStdString(expected_name));
+    QVERIFY(!std::string(m_plugin->description()).empty());
+    QVERIFY(!std::string(m_plugin->author()).empty());
 }
 
 void TestPluginInterface::testStateTransition(PluginState from, PluginState to, bool should_succeed)

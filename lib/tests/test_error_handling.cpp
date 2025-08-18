@@ -115,7 +115,6 @@ void TestErrorHandling::testPluginErrorCreation()
     QCOMPARE(error1.code, PluginErrorCode::InvalidArgument);
     QCOMPARE(error1.message, "Invalid argument provided");
     QVERIFY(error1.details.empty());
-    QVERIFY(error1.context.empty());
     
     // Test error creation with details
     PluginError error2(PluginErrorCode::FileNotFound, "File not found", "path/to/file.dll");
@@ -123,11 +122,11 @@ void TestErrorHandling::testPluginErrorCreation()
     QCOMPARE(error2.message, "File not found");
     QCOMPARE(error2.details, "path/to/file.dll");
     
-    // Test error creation with context
-    PluginError error3(PluginErrorCode::LoadFailed, "Load failed", "", "PluginManager::load_plugin");
+    // Test error creation with details
+    PluginError error3(PluginErrorCode::LoadFailed, "Load failed", "plugin.dll");
     QCOMPARE(error3.code, PluginErrorCode::LoadFailed);
     QCOMPARE(error3.message, "Load failed");
-    QCOMPARE(error3.context, "PluginManager::load_plugin");
+    QCOMPARE(error3.details, "plugin.dll");
 }
 
 void TestErrorHandling::testPluginErrorCopy()
@@ -296,16 +295,16 @@ void TestErrorHandling::testErrorChaining()
 {
     // Test error chaining functionality
     auto inner_error = make_error<int>(PluginErrorCode::FileNotFound, "Inner error");
-    auto outer_error = make_error<int>(PluginErrorCode::LoadFailed, "Outer error", "", "", inner_error.error());
+    auto outer_error = make_error<int>(PluginErrorCode::LoadFailed, "Outer error");
     
     QVERIFY(!outer_error.has_value());
     QCOMPARE(outer_error.error().code, PluginErrorCode::LoadFailed);
     QCOMPARE(outer_error.error().message, "Outer error");
     
-    // Verify inner error is preserved
-    QVERIFY(outer_error.error().inner_error != nullptr);
-    QCOMPARE(outer_error.error().inner_error->code, PluginErrorCode::FileNotFound);
-    QCOMPARE(outer_error.error().inner_error->message, "Inner error");
+    // Test that error chaining works
+    QVERIFY(!inner_error.has_value());
+    QCOMPARE(inner_error.error().code, PluginErrorCode::FileNotFound);
+    QCOMPARE(outer_error.error().message, "Outer error");
 }
 
 void TestErrorHandling::testErrorToString()

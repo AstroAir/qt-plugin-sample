@@ -1,0 +1,252 @@
+{
+    "name": "Advanced Service Plugin",
+    "description": "A comprehensive service plugin demonstrating advanced QtPlugin features including lifecycle management, configuration, performance monitoring, and inter-plugin communication",
+    "version": "1.0.0",
+    "author": "QtPlugin Team",
+    "license": "MIT",
+    "homepage": "https://github.com/example/qtplugin",
+    "category": "Service",
+    "capabilities": [
+        "Service",
+        "Configuration", 
+        "Monitoring",
+        "Threading",
+        "AsyncInit"
+    ],
+    "dependencies": [],
+    "qt_version": "6.2.0",
+    "plugin_version": "3.0.0",
+    "interfaces": [
+        "qtplugin::IPlugin",
+        "qtplugin::IServicePlugin"
+    ],
+    "configuration": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "timer_interval": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 60000,
+                    "default": 1000,
+                    "description": "Timer interval in milliseconds"
+                },
+                "max_queue_size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000,
+                    "default": 100,
+                    "description": "Maximum work queue size"
+                },
+                "performance_interval": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 300000,
+                    "default": 5000,
+                    "description": "Performance monitoring interval in milliseconds"
+                },
+                "enable_monitoring": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable performance monitoring"
+                },
+                "auto_start": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Automatically start service on plugin initialization"
+                },
+                "log_level": {
+                    "type": "string",
+                    "enum": ["debug", "info", "warning", "error"],
+                    "default": "info",
+                    "description": "Logging level"
+                },
+                "performance_tracking": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "sample_rate": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 1.0,
+                            "default": 1.0
+                        },
+                        "history_size": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 10000,
+                            "default": 1000
+                        }
+                    }
+                },
+                "retry_policy": {
+                    "type": "object",
+                    "properties": {
+                        "max_retries": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 10,
+                            "default": 3
+                        },
+                        "retry_delay": {
+                            "type": "integer",
+                            "minimum": 100,
+                            "maximum": 10000,
+                            "default": 1000
+                        },
+                        "exponential_backoff": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "commands": [
+        {
+            "name": "status",
+            "description": "Get current plugin and service status",
+            "parameters": {},
+            "returns": {
+                "plugin_state": "integer",
+                "service_state": "integer", 
+                "uptime_ms": "integer",
+                "is_running": "boolean",
+                "queue_size": "integer",
+                "last_error": "string",
+                "timestamp": "string"
+            }
+        },
+        {
+            "name": "metrics",
+            "description": "Get performance metrics",
+            "parameters": {},
+            "returns": {
+                "tasks_processed": "integer",
+                "tasks_failed": "integer",
+                "average_processing_time_ms": "number",
+                "current_memory_usage": "integer",
+                "peak_memory_usage": "integer",
+                "cpu_usage_percent": "number",
+                "uptime_ms": "integer",
+                "error_rate": "number"
+            }
+        },
+        {
+            "name": "health",
+            "description": "Get service health status",
+            "parameters": {},
+            "returns": {
+                "is_healthy": "boolean",
+                "health_score": "number",
+                "status_message": "string",
+                "last_check": "string"
+            }
+        },
+        {
+            "name": "start",
+            "description": "Start the service",
+            "parameters": {},
+            "returns": {
+                "success": "boolean",
+                "error": "string"
+            }
+        },
+        {
+            "name": "stop", 
+            "description": "Stop the service",
+            "parameters": {},
+            "returns": {
+                "success": "boolean",
+                "error": "string"
+            }
+        },
+        {
+            "name": "pause",
+            "description": "Pause the service",
+            "parameters": {},
+            "returns": {
+                "success": "boolean",
+                "error": "string"
+            }
+        },
+        {
+            "name": "resume",
+            "description": "Resume the service",
+            "parameters": {},
+            "returns": {
+                "success": "boolean", 
+                "error": "string"
+            }
+        },
+        {
+            "name": "configure",
+            "description": "Update plugin configuration",
+            "parameters": {
+                "type": "object",
+                "description": "Configuration object with new settings"
+            },
+            "returns": {
+                "success": "boolean",
+                "error": "string"
+            }
+        },
+        {
+            "name": "add_task",
+            "description": "Add a task to the work queue",
+            "parameters": {
+                "type": {
+                    "type": "string",
+                    "description": "Task type"
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Task data"
+                }
+            },
+            "returns": {
+                "success": "boolean",
+                "task_id": "integer"
+            }
+        },
+        {
+            "name": "clear_queue",
+            "description": "Clear the work queue",
+            "parameters": {},
+            "returns": {
+                "success": "boolean",
+                "message": "string"
+            }
+        },
+        {
+            "name": "reset_metrics",
+            "description": "Reset performance metrics",
+            "parameters": {},
+            "returns": {
+                "success": "boolean",
+                "message": "string"
+            }
+        }
+    ],
+    "events": [
+        "service_started",
+        "service_stopped", 
+        "service_paused",
+        "service_resumed",
+        "service_error",
+        "task_completed",
+        "task_failed",
+        "queue_size_changed",
+        "performance_metrics_updated"
+    ],
+    "build_info": {
+        "compiler": "C++20",
+        "qt_modules": ["Core"],
+        "build_type": "Shared Library",
+        "platform": "Cross-platform"
+    }
+}

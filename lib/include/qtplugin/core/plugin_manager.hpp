@@ -11,6 +11,10 @@
 #include "../communication/message_bus.hpp"
 #include "../security/security_manager.hpp"
 #include "../managers/configuration_manager.hpp"
+#include "../managers/logging_manager.hpp"
+#include "../managers/resource_manager.hpp"
+#include "../managers/resource_lifecycle.hpp"
+#include "../managers/resource_monitor.hpp"
 #include "../utils/error_handling.hpp"
 #include "../utils/concepts.hpp"
 #include <QObject>
@@ -562,6 +566,16 @@ private:
     std::vector<std::string> topological_sort() const;
     void cleanup_plugin(const std::string& plugin_id);
     void update_plugin_metrics(const std::string& plugin_id);
+
+    // Dependency graph helpers
+    int calculate_dependency_level(const std::string& plugin_id, const std::vector<std::string>& dependencies) const;
+    void detect_circular_dependencies() const;
+    bool has_circular_dependency(const std::string& plugin_id,
+                               std::unordered_set<std::string>& visited,
+                               std::unordered_set<std::string>& recursion_stack) const;
+
+    // Utility helpers
+    std::string plugin_state_to_string(PluginState state) const;
 };
 
 } // namespace qtplugin

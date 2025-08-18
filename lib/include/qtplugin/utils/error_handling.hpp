@@ -46,6 +46,12 @@ namespace qtplugin {
         T& operator*() & { return value(); }
         T&& operator*() && { return std::move(*this).value(); }
 
+        bool has_error() const { return !has_value(); }
+
+        T value_or(const T& default_value) const {
+            return has_value() ? value() : default_value;
+        }
+
     private:
         std::variant<T, unexpected<E>> m_data;
     };
@@ -100,7 +106,10 @@ enum class PluginErrorCode {
     FileNotFound = 100,
     InvalidFormat,
     LoadFailed,
+    UnloadFailed,
     SymbolNotFound,
+    AlreadyLoaded,
+    NotLoaded,
     
     // Initialization errors
     InitializationFailed = 200,
@@ -127,9 +136,11 @@ enum class PluginErrorCode {
     
     // System errors
     OutOfMemory = 500,
+    ResourceExhausted,
     NetworkError,
     FileSystemError,
     ThreadingError,
+    TimeoutError,
     
     // Generic errors
     UnknownError = 999
@@ -288,12 +299,12 @@ struct PluginError {
      * @brief Get formatted error message with location information
      */
     std::string formatted_message() const {
-        return std::format("{}:{} in {}: {} ({})", 
-                          location.file_name(), 
-                          location.line(),
-                          location.function_name(),
-                          message,
-                          details.empty() ? "no details" : details);
+        std::string result = std::string(location.file_name()) + ":" +
+                           std::to_string(location.line()) + " in " +
+                           std::string(location.function_name()) + ": " +
+                           message + " (" +
+                           (details.empty() ? "no details" : details) + ")";
+        return result;
     }
     
     /**
@@ -301,6 +312,27 @@ struct PluginError {
      */
     operator std::error_code() const {
         return make_error_code(code);
+    }
+
+    /**
+     * @brief Convert to string representation
+     */
+    std::string to_string() const {
+        return formatted_message();
+    }
+
+    /**
+     * @brief Equality comparison
+     */
+    bool operator==(const PluginError& other) const {
+        return code == other.code && message == other.message && details == other.details;
+    }
+
+    /**
+     * @brief Inequality comparison
+     */
+    bool operator!=(const PluginError& other) const {
+        return !(*this == other);
     }
     
     /**
@@ -399,6 +431,15 @@ inline PluginResult<T> make_error(PluginErrorCode code, std::string_view message
 }
 
 /**
+ * @brief Helper function to create an error result with error code, message, and details
+ */
+template<typename T>
+inline PluginResult<T> make_error(PluginErrorCode code, std::string_view message, std::string_view details,
+                                  std::source_location loc = std::source_location::current()) {
+    return PluginResult<T>{unexpected<PluginError>{PluginError{code, message, details, loc}}};
+}
+
+/**
  * @brief Macro to create an error with current location
  */
 #define QTPLUGIN_ERROR(code, ...) \
@@ -411,18 +452,23 @@ inline PluginResult<T> make_error(PluginErrorCode code, std::string_view message
     return qtplugin::unexpected<qtplugin::PluginError>{QTPLUGIN_ERROR(code, ##__VA_ARGS__)}
 
 /**
+ * @brief Convert error code to string
+ */
+const char* error_code_to_string(PluginErrorCode code) noexcept;
+
+/**
  * @brief Exception class for plugin errors (for compatibility with exception-based code)
  */
 class PluginException : public std::exception {
 public:
     explicit PluginException(PluginError error) : m_error(std::move(error)) {}
-    
+
     const char* what() const noexcept override {
         return m_error.message.c_str();
     }
-    
+
     const PluginError& error() const noexcept { return m_error; }
-    
+
 private:
     PluginError m_error;
 };
