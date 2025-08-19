@@ -4,7 +4,7 @@
  * @version 3.0.0
  */
 
-#include "qtplugin/utils/error_handling.hpp"
+#include <qtplugin/utils/error_handling.hpp>
 #include <sstream>
 
 namespace qtplugin {
@@ -27,6 +27,8 @@ const char* error_code_to_string(PluginErrorCode code) noexcept {
             return "AlreadyLoaded";
         case PluginErrorCode::NotLoaded:
             return "NotLoaded";
+        case PluginErrorCode::PluginNotFound:
+            return "PluginNotFound";
         case PluginErrorCode::InitializationFailed:
             return "InitializationFailed";
         case PluginErrorCode::ConfigurationError:

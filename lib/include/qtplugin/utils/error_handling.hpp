@@ -110,6 +110,7 @@ enum class PluginErrorCode {
     SymbolNotFound,
     AlreadyLoaded,
     NotLoaded,
+    PluginNotFound,
     
     // Initialization errors
     InitializationFailed = 200,
