@@ -325,30 +325,11 @@ int PluginManager::load_all_plugins(const PluginLoadOptions& options) {
     return loaded_count;
 }
 
-void PluginManager::on_file_changed(const QString& path) {
-    std::string file_path = path.toStdString();
-    
-    // Find plugin by file path
-    std::shared_lock lock(m_plugins_mutex);
-    for (const auto& [id, info] : m_plugins) {
-        if (info->file_path.string() == file_path && info->hot_reload_enabled) {
-            // Reload plugin asynchronously
-            auto future = std::async(std::launch::async, [this, id]() {
-                reload_plugin(id, true);
-            });
-            // Future will be destroyed when it goes out of scope, which is fine for fire-and-forget
-            (void)future; // Suppress unused variable warning
-            break;
-        }
-    }
-}
+// Hot reload functionality moved to PluginHotReloadManager
+// This method is now redundant and can be removed
 
-void PluginManager::on_monitoring_timer() {
-    std::shared_lock lock(m_plugins_mutex);
-    for (const auto& [id, info] : m_plugins) {
-        update_plugin_metrics(id);
-    }
-}
+// Monitoring functionality moved to PluginMetricsCollector
+// This method is now redundant and can be removed
 
 qtplugin::expected<void, PluginError> PluginManager::validate_plugin_file(const std::filesystem::path& file_path) const {
     if (!std::filesystem::exists(file_path)) {
@@ -369,198 +350,39 @@ qtplugin::expected<void, PluginError> PluginManager::check_plugin_dependencies(c
     return make_success();
 }
 
-void PluginManager::update_dependency_graph() {
-    std::unique_lock lock(m_plugins_mutex);
+// Dependency graph management moved to PluginDependencyResolver
+// This method is now redundant and can be removed
 
-    // Clear existing dependency graph
-    m_dependency_graph.clear();
-
-    // Build dependency graph from loaded plugins
-    for (const auto& [plugin_id, plugin_info] : m_plugins) {
-        if (!plugin_info || !plugin_info->instance) {
-            continue;
-        }
-
-        DependencyNode node;
-        node.plugin_id = plugin_id;
-
-        // Convert vector to unordered_set
-        for (const auto& dep : plugin_info->metadata.dependencies) {
-            node.dependencies.insert(dep);
-        }
-        node.dependents.clear();
-
-        // Set load order based on dependency count (will be refined later)
-        node.load_order = static_cast<int>(plugin_info->metadata.dependencies.size());
-
-        m_dependency_graph[plugin_id] = std::move(node);
-    }
-
-    // Build reverse dependencies (dependents)
-    for (auto& [plugin_id, node] : m_dependency_graph) {
-        for (const auto& dependency : node.dependencies) {
-            auto dep_it = m_dependency_graph.find(dependency);
-            if (dep_it != m_dependency_graph.end()) {
-                dep_it->second.dependents.insert(plugin_id);
-            }
-        }
-    }
-
-    // Validate for circular dependencies
-    detect_circular_dependencies();
-}
-
+// Metrics collection moved to PluginMetricsCollector
 void PluginManager::update_plugin_metrics(const std::string& plugin_id) {
-    std::unique_lock lock(m_plugins_mutex);
-
-    auto it = m_plugins.find(plugin_id);
-    if (it == m_plugins.end() || !it->second || !it->second->instance) {
-        return;
-    }
-
-    auto& plugin_info = it->second;
-    auto& metrics = plugin_info->metrics;
-
-    // Update basic metrics
-    auto now = std::chrono::system_clock::now();
-    plugin_info->last_activity = now;
-
-    // Calculate uptime
-    auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - plugin_info->load_time).count();
-    metrics["uptime_ms"] = static_cast<qint64>(uptime_ms);
-
-    // Update activity timestamp
-    metrics["last_activity"] = QString::number(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            now.time_since_epoch()).count());
-
-    // Get plugin-specific metrics if available
-    try {
-        if (plugin_info->instance->capabilities() & static_cast<PluginCapabilities>(PluginCapability::Monitoring)) {
-            // Try to get metrics from plugin
-            auto plugin_metrics_result = plugin_info->instance->execute_command("get_metrics");
-            if (plugin_metrics_result) {
-                metrics["plugin_metrics"] = plugin_metrics_result.value();
-            }
-        }
-    } catch (...) {
-        // Ignore errors in metrics collection
-    }
-
-    // Update error count
-    metrics["error_count"] = static_cast<int>(plugin_info->error_log.size());
-
-    // Update state information
-    metrics["state"] = static_cast<int>(plugin_info->state);
-    metrics["state_name"] = QString::fromStdString(plugin_state_to_string(plugin_info->state));
+    m_metrics_collector->update_plugin_metrics(plugin_id, m_plugin_registry.get());
 }
 
 // === Missing Method Implementations ===
 
+// System metrics collection moved to PluginMetricsCollector
 QJsonObject PluginManager::system_metrics() const {
-    std::shared_lock lock(m_plugins_mutex);
-
-    QJsonObject metrics;
-
-    // Count plugins by state
-    int total_plugins = 0;
-    int loaded_plugins = 0;
-    int failed_plugins = 0;
-    int unloaded_plugins = 0;
-    int initializing_plugins = 0;
-
-    for (const auto& [id, plugin_info] : m_plugins) {
-        total_plugins++;
-        if (plugin_info) {
-            switch (plugin_info->state) {
-                case PluginState::Loaded:
-                case PluginState::Running:
-                    loaded_plugins++;
-                    break;
-                case PluginState::Error:
-                    failed_plugins++;
-                    break;
-                case PluginState::Unloaded:
-                case PluginState::Stopped:
-                    unloaded_plugins++;
-                    break;
-                case PluginState::Initializing:
-                case PluginState::Loading:
-                    initializing_plugins++;
-                    break;
-                case PluginState::Paused:
-                case PluginState::Stopping:
-                case PluginState::Reloading:
-                    // Count as loaded but not fully operational
-                    loaded_plugins++;
-                    break;
-            }
-        }
-    }
-
-    metrics["total_plugins"] = total_plugins;
-    metrics["loaded_plugins"] = loaded_plugins;
-    metrics["failed_plugins"] = failed_plugins;
-    metrics["unloaded_plugins"] = unloaded_plugins;
-    metrics["initializing_plugins"] = initializing_plugins;
-
-    // Calculate memory usage (basic estimation)
-    size_t estimated_memory = 0;
-    for (const auto& [id, plugin_info] : m_plugins) {
-        if (plugin_info) {
-            // Basic estimation: plugin info + metadata + configuration
-            estimated_memory += sizeof(PluginInfo);
-            estimated_memory += plugin_info->metadata.name.size();
-            estimated_memory += plugin_info->metadata.description.size();
-            estimated_memory += plugin_info->error_log.size() * 100; // Rough estimate
-        }
-    }
-    metrics["estimated_memory_bytes"] = static_cast<qint64>(estimated_memory);
-
-    // System uptime (time since first plugin was loaded)
-    if (!m_plugins.empty()) {
-        auto earliest_load_time = std::chrono::system_clock::now();
-        for (const auto& [id, plugin_info] : m_plugins) {
-            if (plugin_info && plugin_info->load_time < earliest_load_time) {
-                earliest_load_time = plugin_info->load_time;
-            }
-        }
-
-        auto uptime_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now() - earliest_load_time).count();
-        metrics["system_uptime_ms"] = static_cast<qint64>(uptime_ms);
-    } else {
-        metrics["system_uptime_ms"] = 0;
-    }
-
-    // Monitoring status
-    metrics["monitoring_active"] = m_monitoring_active.load();
-
-    // Security level
-    metrics["security_level"] = static_cast<int>(m_security_level);
-
-    // Dependency graph stats
-    metrics["dependency_nodes"] = static_cast<int>(m_dependency_graph.size());
-
-    return metrics;
+    return m_metrics_collector->get_system_metrics(m_plugin_registry.get());
 }
 
 void PluginManager::shutdown_all_plugins() {
-    std::unique_lock lock(m_plugins_mutex);
+    // Get all plugin IDs from registry
+    auto plugin_ids = m_plugin_registry->get_all_plugin_ids();
 
     // Shutdown all plugins (order doesn't matter for shutdown)
-    for (auto& [id, info] : m_plugins) {
-        if (info && info->instance) {
+    for (const auto& plugin_id : plugin_ids) {
+        auto plugin = m_plugin_registry->get_plugin(plugin_id);
+        if (plugin) {
             try {
-                info->instance->shutdown();
+                plugin->shutdown();
             } catch (...) {
                 // Log error but continue shutdown
             }
         }
     }
 
-    m_plugins.clear();
+    // Clear registry
+    m_plugin_registry->clear();
 }
 
 int PluginManager::start_all_services() {
@@ -619,51 +441,20 @@ int PluginManager::stop_all_services() {
     return stopped_count;
 }
 
+// Hot reload functionality moved to PluginHotReloadManager
 qtplugin::expected<void, PluginError> PluginManager::enable_hot_reload(std::string_view plugin_id) {
-    std::unique_lock lock(m_plugins_mutex);
-
-    auto it = m_plugins.find(std::string(plugin_id));
-    if (it == m_plugins.end()) {
-        return make_error<void>(PluginErrorCode::LoadFailed, "Plugin not found");
-    }
-
-    // Add to file watcher if not already watching
-    if (m_file_watcher && it->second && !it->second->file_path.empty()) {
-        m_file_watcher->addPath(QString::fromStdString(it->second->file_path.string()));
-        it->second->hot_reload_enabled = true;
-    }
-
-    return make_success();
+    return m_hot_reload_manager->enable_hot_reload(std::string(plugin_id),
+                                                  std::filesystem::path{});
 }
 
+// Dependency checking moved to PluginDependencyResolver
 bool PluginManager::can_unload_safely(std::string_view plugin_id) const {
-    std::shared_lock lock(m_plugins_mutex);
-
-    // Check if any other plugins depend on this one
-    for (const auto& [id, info] : m_plugins) {
-        if (id != plugin_id && info) {
-            // Check metadata dependencies
-            for (const auto& dep : info->metadata.dependencies) {
-                if (dep == plugin_id) {
-                    return false; // Another plugin depends on this one
-                }
-            }
-        }
-    }
-
-    return true;
+    return m_dependency_resolver->can_unload_safely(std::string(plugin_id));
 }
 
+// Hot reload functionality moved to PluginHotReloadManager
 void PluginManager::disable_hot_reload(std::string_view plugin_id) {
-    std::unique_lock lock(m_plugins_mutex);
-
-    auto it = m_plugins.find(std::string(plugin_id));
-    if (it != m_plugins.end() && it->second) {
-        if (m_file_watcher && !it->second->file_path.empty()) {
-            m_file_watcher->removePath(QString::fromStdString(it->second->file_path.string()));
-        }
-        it->second->hot_reload_enabled = false;
-    }
+    m_hot_reload_manager->disable_hot_reload(std::string(plugin_id));
 }
 
 qtplugin::expected<void, PluginError> PluginManager::reload_plugin(std::string_view plugin_id, bool preserve_state) {
@@ -793,54 +584,19 @@ qtplugin::expected<void, PluginError> PluginManager::configure_plugin(std::strin
     return make_success();
 }
 
+// Plugin metrics collection moved to PluginMetricsCollector
 QJsonObject PluginManager::plugin_metrics(std::string_view plugin_id) const {
-    std::shared_lock lock(m_plugins_mutex);
-    auto it = m_plugins.find(std::string(plugin_id));
-    if (it == m_plugins.end()) {
-        return QJsonObject();
-    }
-
-    return it->second->metrics;
+    return m_metrics_collector->get_plugin_metrics(std::string(plugin_id), m_plugin_registry.get());
 }
 
+// Monitoring functionality moved to PluginMetricsCollector
 void PluginManager::start_monitoring(std::chrono::milliseconds interval) {
-    if (m_monitoring_active) {
-        return;
-    }
-
-    m_monitoring_active = true;
-
-    if (!m_monitoring_timer) {
-        m_monitoring_timer = std::make_unique<QTimer>(this);
-        connect(m_monitoring_timer.get(), &QTimer::timeout, this, &PluginManager::on_monitoring_timer);
-    }
-
-    m_monitoring_timer->start(static_cast<int>(interval.count()));
+    m_metrics_collector->start_monitoring(interval);
 }
 
+// Plugin info retrieval moved to PluginRegistry
 std::optional<PluginInfo> PluginManager::get_plugin_info(std::string_view plugin_id) const {
-    std::shared_lock lock(m_plugins_mutex);
-    auto it = m_plugins.find(std::string(plugin_id));
-    if (it == m_plugins.end()) {
-        return std::nullopt;
-    }
-
-    // Create a copy without the unique_ptr members
-    PluginInfo info;
-    info.id = it->second->id;
-    info.file_path = it->second->file_path;
-    info.metadata = it->second->metadata;
-    info.state = it->second->state;
-    info.load_time = it->second->load_time;
-    info.last_activity = it->second->last_activity;
-    info.instance = it->second->instance;
-    // Skip loader (unique_ptr)
-    info.configuration = it->second->configuration;
-    info.error_log = it->second->error_log;
-    info.metrics = it->second->metrics;
-    info.hot_reload_enabled = it->second->hot_reload_enabled;
-
-    return info;
+    return m_plugin_registry->get_plugin_info(std::string(plugin_id));
 }
 
 QJsonObject PluginManager::get_plugin_configuration(std::string_view plugin_id) const {
@@ -875,62 +631,11 @@ IResourceMonitor& PluginManager::resource_monitor() const {
 
 // === Helper Methods ===
 
-int PluginManager::calculate_dependency_level(const std::string& plugin_id,
-                                            const std::vector<std::string>& dependencies) const {
-    if (dependencies.empty()) {
-        return 0;
-    }
+// Dependency level calculation moved to PluginDependencyResolver
+// This method is now redundant and can be removed
 
-    int max_level = 0;
-    for (const auto& dep : dependencies) {
-        auto it = m_plugins.find(dep);
-        if (it != m_plugins.end() && it->second) {
-            int dep_level = calculate_dependency_level(dep, it->second->metadata.dependencies);
-            max_level = std::max(max_level, dep_level + 1);
-        }
-    }
-
-    return max_level;
-}
-
-void PluginManager::detect_circular_dependencies() const {
-    std::unordered_set<std::string> visited;
-    std::unordered_set<std::string> recursion_stack;
-
-    for (const auto& [plugin_id, node] : m_dependency_graph) {
-        if (visited.find(plugin_id) == visited.end()) {
-            if (has_circular_dependency(plugin_id, visited, recursion_stack)) {
-                qCWarning(pluginLog) << "Circular dependency detected involving plugin:"
-                                    << QString::fromStdString(plugin_id);
-            }
-        }
-    }
-}
-
-bool PluginManager::has_circular_dependency(const std::string& plugin_id,
-                                          std::unordered_set<std::string>& visited,
-                                          std::unordered_set<std::string>& recursion_stack) const {
-    visited.insert(plugin_id);
-    recursion_stack.insert(plugin_id);
-
-    auto it = m_dependency_graph.find(plugin_id);
-    if (it != m_dependency_graph.end()) {
-        for (const auto& dep : it->second.dependencies) {
-            if (recursion_stack.find(dep) != recursion_stack.end()) {
-                return true; // Circular dependency found
-            }
-
-            if (visited.find(dep) == visited.end()) {
-                if (has_circular_dependency(dep, visited, recursion_stack)) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    recursion_stack.erase(plugin_id);
-    return false;
-}
+// Circular dependency detection moved to PluginDependencyResolver
+// These methods are now redundant and can be removed
 
 std::string PluginManager::plugin_state_to_string(PluginState state) const {
     switch (state) {
