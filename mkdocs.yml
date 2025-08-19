@@ -16,7 +16,7 @@ copyright: Copyright &copy; 2024 QtPlugin Development Team
 theme:
   name: material
   language: en
-  
+
   # Color scheme
   palette:
     # Palette toggle for light mode
@@ -27,7 +27,7 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    
+
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
@@ -36,7 +36,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  
+
   # Features
   features:
     - announce.dismiss
@@ -64,13 +64,13 @@ theme:
     - search.suggest
     - toc.follow
     - toc.integrate
-  
+
   # Custom icons
   icon:
     repo: fontawesome/brands/github
     edit: material/pencil
     view: material/eye
-    
+
   # Logo and favicon
   logo: assets/images/logo.png
   favicon: assets/images/favicon.ico
@@ -96,7 +96,7 @@ plugins:
       cache_safe: true
   - redirects:
       redirect_maps:
-        'index.md': 'getting-started/overview.md'
+        "index.md": "getting-started/overview.md"
 
 # Markdown extensions
 markdown_extensions:
@@ -110,7 +110,7 @@ markdown_extensions:
       permalink: true
       title: On this page
   - tables
-  
+
   # Python Markdown Extensions
   - pymdownx.arithmatex:
       generic: true
@@ -168,7 +168,7 @@ extra:
   version:
     provider: mike
     default: stable
-  
+
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/example/qt-plugin-sample
@@ -176,7 +176,7 @@ extra:
     - icon: fontawesome/solid/globe
       link: https://qtplugin.dev
       name: Official Website
-  
+
   analytics:
     provider: google
     property: G-XXXXXXXXXX
@@ -191,7 +191,7 @@ extra:
         - icon: material/emoticon-sad-outline
           name: This page could be improved
           data: 0
-          note: >- 
+          note: >-
             Thanks for your feedback! Help us improve this page by
             <a href="https://github.com/example/qt-plugin-sample/issues/new/?title=[Feedback]+{title}+-+{url}" target="_blank" rel="noopener">telling us what you found lacking</a>.
 
