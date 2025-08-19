@@ -49,6 +49,8 @@ set(QTPLUGIN_CORE_SOURCES
     src/core/plugin_interface.cpp
     src/core/plugin_manager.cpp
     src/core/plugin_loader.cpp
+    src/core/plugin_registry.cpp
+    src/core/plugin_dependency_resolver.cpp
     src/communication/message_bus.cpp
     src/utils/version.cpp
     src/utils/error_handling.cpp
@@ -65,6 +67,8 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/core/plugin_interface.hpp
     include/qtplugin/core/plugin_manager.hpp
     include/qtplugin/core/plugin_loader.hpp
+    include/qtplugin/core/plugin_registry.hpp
+    include/qtplugin/core/plugin_dependency_resolver.hpp
     include/qtplugin/core/service_plugin_interface.hpp
     include/qtplugin/communication/message_bus.hpp
     include/qtplugin/communication/message_types.hpp

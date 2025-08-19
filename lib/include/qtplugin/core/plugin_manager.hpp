@@ -8,6 +8,8 @@
 
 #include "plugin_interface.hpp"
 #include "plugin_loader.hpp"
+#include "plugin_registry.hpp"
+#include "plugin_dependency_resolver.hpp"
 #include "../communication/message_bus.hpp"
 #include "../security/security_manager.hpp"
 #include "../managers/configuration_manager.hpp"
@@ -125,6 +127,8 @@ public:
                           std::unique_ptr<IResourceManager> resource_manager = nullptr,
                           std::unique_ptr<IResourceLifecycleManager> resource_lifecycle_manager = nullptr,
                           std::unique_ptr<IResourceMonitor> resource_monitor = nullptr,
+                          std::unique_ptr<IPluginRegistry> plugin_registry = nullptr,
+                          std::unique_ptr<IPluginDependencyResolver> dependency_resolver = nullptr,
                           QObject* parent = nullptr);
     
     /**
@@ -538,11 +542,14 @@ private:
     std::unique_ptr<IResourceManager> m_resource_manager;
     std::unique_ptr<IResourceLifecycleManager> m_resource_lifecycle_manager;
     std::unique_ptr<IResourceMonitor> m_resource_monitor;
+    std::unique_ptr<IPluginRegistry> m_plugin_registry;
+    std::unique_ptr<IPluginDependencyResolver> m_dependency_resolver;
     
-    // Plugin storage
-    mutable std::shared_mutex m_plugins_mutex;
-    std::unordered_map<std::string, std::unique_ptr<PluginInfo>> m_plugins;
-    std::unordered_map<std::string, DependencyNode> m_dependency_graph;
+    // Plugin storage (now handled by PluginRegistry and PluginDependencyResolver)
+    // TODO: Remove after refactoring is complete
+    // mutable std::shared_mutex m_plugins_mutex;
+    // std::unordered_map<std::string, std::unique_ptr<PluginInfo>> m_plugins;
+    // std::unordered_map<std::string, DependencyNode> m_dependency_graph;
     
     // Search paths
     mutable std::shared_mutex m_search_paths_mutex;
