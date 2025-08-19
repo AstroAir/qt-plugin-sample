@@ -70,6 +70,9 @@ set(QTPLUGIN_CORE_SOURCES
     src/managers/resource_manager.cpp
     src/managers/resource_lifecycle.cpp
     src/managers/resource_monitor.cpp
+    src/managers/components/resource_pool.cpp
+    src/managers/components/resource_allocator.cpp
+    src/managers/components/resource_monitor.cpp
 )
 
 # Core library headers
@@ -106,6 +109,9 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/managers/resource_lifecycle_impl.hpp
     include/qtplugin/managers/resource_monitor.hpp
     include/qtplugin/managers/resource_monitor_impl.hpp
+    include/qtplugin/managers/components/resource_pool.hpp
+    include/qtplugin/managers/components/resource_allocator.hpp
+    include/qtplugin/managers/components/resource_monitor.hpp
     include/qtplugin/qtplugin.hpp
 )
 
