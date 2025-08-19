@@ -1,21 +1,88 @@
-# QtPlugin Developer Guide
+# Developer Guide
 
-This comprehensive guide covers everything you need to know to develop plugins for the QtPlugin system.
-
-## Table of Contents
-
-1. [Plugin Development](plugin-development.md) - Creating plugins
-2. [Plugin Architecture](plugin-architecture.md) - Understanding plugin structure
-3. [Advanced Features](advanced-features.md) - Advanced plugin capabilities
-4. [Testing](testing.md) - Testing your plugins
-5. [Debugging](debugging.md) - Debugging techniques
-6. [Performance](performance.md) - Performance optimization
-7. [Security](security.md) - Security considerations
-8. [Deployment](deployment.md) - Plugin deployment
+Comprehensive guide for creating powerful, production-ready plugins with QtPlugin.
 
 ## Overview
 
-The QtPlugin system provides a comprehensive framework for creating modular, extensible applications. As a plugin developer, you'll create dynamic libraries that implement specific interfaces and can be loaded at runtime.
+The QtPlugin system provides a robust framework for creating modular, extensible applications. As a plugin developer, you'll create dynamic libraries that implement specific interfaces and can be loaded at runtime.
+
+### What You'll Learn
+
+This guide covers everything from basic plugin creation to advanced topics:
+
+- **🔌 Plugin Fundamentals** - Core concepts and interfaces
+- **🏗️ Architecture Patterns** - Best practices and design patterns
+- **⚡ Advanced Features** - Hot reloading, inter-plugin communication, security
+- **🧪 Testing & Debugging** - Comprehensive testing strategies
+- **🚀 Performance** - Optimization techniques and monitoring
+- **📦 Deployment** - Distribution and packaging
+
+## Quick Navigation
+
+<div class="grid cards" markdown>
+
+- :material-rocket-launch:{ .lg .middle } **Getting Started**
+
+    ---
+
+    New to plugin development? Start here for fundamentals and your first plugin.
+
+    [:octicons-arrow-right-24: Plugin Development](plugin-development.md)
+
+- :material-architecture:{ .lg .middle } **Architecture**
+
+    ---
+
+    Understand plugin architecture, patterns, and design principles.
+
+    [:octicons-arrow-right-24: Plugin Architecture](plugin-architecture.md)
+
+- :material-lightning-bolt:{ .lg .middle } **Advanced Features**
+
+    ---
+
+    Explore advanced capabilities like hot reloading and inter-plugin communication.
+
+    [:octicons-arrow-right-24: Advanced Features](advanced-features.md)
+
+- :material-test-tube:{ .lg .middle } **Testing & Debugging**
+
+    ---
+
+    Learn testing strategies, debugging techniques, and quality assurance.
+
+    [:octicons-arrow-right-24: Testing Guide](testing.md)
+
+- :material-speedometer:{ .lg .middle } **Performance**
+
+    ---
+
+    Optimize plugin performance and implement monitoring.
+
+    [:octicons-arrow-right-24: Performance Guide](performance.md)
+
+- :material-shield-check:{ .lg .middle } **Security**
+
+    ---
+
+    Implement security best practices and validation.
+
+    [:octicons-arrow-right-24: Security Guide](security.md)
+
+</div>
+
+## Development Workflow
+
+```mermaid
+graph LR
+    A[Design Plugin] --> B[Implement Interface]
+    B --> C[Add Functionality]
+    C --> D[Write Tests]
+    D --> E[Debug & Profile]
+    E --> F[Package & Deploy]
+    F --> G[Monitor & Maintain]
+    G --> A
+```
 
 ## Key Concepts for Developers
 

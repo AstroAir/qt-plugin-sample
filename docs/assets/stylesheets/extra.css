@@ -1,0 +1,168 @@
+/* Extra CSS for QtPlugin documentation */
+
+/* Custom color scheme for QtPlugin branding */
+:root {
+  --qtplugin-primary: #2196f3;
+  --qtplugin-accent: #03dac6;
+  --qtplugin-dark: #1976d2;
+  --qtplugin-light: #bbdefb;
+}
+
+/* Enhanced code blocks */
+.highlight {
+  border-radius: 0.2rem;
+  margin: 1em 0;
+}
+
+.highlight pre {
+  margin: 0;
+  padding: 1rem;
+}
+
+/* Custom admonition styles */
+.md-typeset .admonition.qtplugin {
+  border-color: var(--qtplugin-primary);
+}
+
+.md-typeset .admonition.qtplugin > .admonition-title {
+  background-color: var(--qtplugin-primary);
+  color: white;
+}
+
+.md-typeset .admonition.qtplugin > .admonition-title::before {
+  background-color: currentColor;
+  -webkit-mask-image: var(--md-admonition-icon--note);
+  mask-image: var(--md-admonition-icon--note);
+}
+
+/* API documentation styling */
+.api-signature {
+  background-color: var(--md-code-bg-color);
+  border-left: 4px solid var(--qtplugin-primary);
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0.2rem;
+  font-family: var(--md-code-font);
+}
+
+.api-parameter {
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+}
+
+.api-parameter-name {
+  font-weight: bold;
+  color: var(--qtplugin-primary);
+}
+
+.api-parameter-type {
+  font-style: italic;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Plugin capability badges */
+.capability-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  margin: 0.1rem;
+  background-color: var(--qtplugin-light);
+  color: var(--qtplugin-dark);
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Version badges */
+.version-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background-color: var(--qtplugin-accent);
+  color: white;
+  border-radius: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Status indicators */
+.status-success {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.status-warning {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.status-error {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* Enhanced tables */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--md-typeset-table-color);
+  border-radius: 0.2rem;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--qtplugin-light);
+  color: var(--qtplugin-dark);
+  font-weight: 600;
+}
+
+/* Code example containers */
+.code-example {
+  margin: 1.5rem 0;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.2rem;
+}
+
+.code-example-header {
+  background-color: var(--md-default-fg-color--lightest);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.code-example-content {
+  padding: 0;
+}
+
+/* Navigation enhancements */
+.md-nav__item--active > .md-nav__link {
+  color: var(--qtplugin-primary);
+  font-weight: 500;
+}
+
+/* Footer customization */
+.md-footer {
+  background-color: var(--qtplugin-dark);
+}
+
+/* Search result highlighting */
+.md-search-result__teaser mark {
+  background-color: var(--qtplugin-accent);
+  color: white;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-nav__title {
+    background-color: var(--qtplugin-primary);
+  }
+}
+
+/* Print styles */
+@media print {
+  .md-header,
+  .md-footer,
+  .md-nav,
+  .md-sidebar {
+    display: none !important;
+  }
+
+  .md-content {
+    margin: 0 !important;
+  }
+}

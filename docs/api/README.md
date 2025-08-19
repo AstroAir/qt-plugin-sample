@@ -1,19 +1,48 @@
-# QtPlugin API Reference
+# API Reference
 
-This comprehensive API reference covers all public interfaces, classes, and functions in the QtPlugin library.
+Complete API documentation for the QtPlugin library v3.0.0.
 
-## Table of Contents
+## Quick Navigation
 
-### Core Interfaces
+<div class="grid cards" markdown>
 
-- [IPlugin](interfaces/iplugin.md) - Base plugin interface
-- [IServicePlugin](interfaces/iserviceplugin.md) - Service plugin interface
-- [IUIPlugin](interfaces/iuiplugin.md) - UI plugin interface
-- [INetworkPlugin](interfaces/inetworkplugin.md) - Network plugin interface
-- [IDataProviderPlugin](interfaces/idataproviderplugin.md) - Data provider interface
-- [IScriptingPlugin](interfaces/iscriptingplugin.md) - Scripting plugin interface
+- :material-api:{ .lg .middle } **Core Interfaces**
 
-### Core Classes
+    ---
+
+    Base plugin interfaces and specialized plugin types
+
+    [:octicons-arrow-right-24: Interfaces](interfaces/index.md)
+
+- :material-cog:{ .lg .middle } **Core Classes**
+
+    ---
+
+    Plugin manager, loader, and core system classes
+
+    [:octicons-arrow-right-24: Core Classes](core/index.md)
+
+- :material-shield:{ .lg .middle } **Security**
+
+    ---
+
+    Security manager, validation, and trust management
+
+    [:octicons-arrow-right-24: Security API](security/index.md)
+
+- :material-tools:{ .lg .middle } **Utilities**
+
+    ---
+
+    Helper classes, error handling, and utility functions
+
+    [:octicons-arrow-right-24: Utilities](utilities/index.md)
+
+</div>
+
+## Overview
+
+The QtPlugin API is organized into several key areas:
 
 - [PluginManager](classes/pluginmanager.md) - Plugin management
 - [PluginLoader](classes/pluginloader.md) - Plugin loading

@@ -1,0 +1,30 @@
+# Documentation requirements for QtPlugin project
+# Install with: pip install -r requirements-docs.txt
+
+# MkDocs and core dependencies
+mkdocs>=1.5.0
+mkdocs-material>=9.4.0
+
+# Extensions for enhanced documentation
+mkdocs-awesome-pages-plugin>=2.9.0
+mkdocs-include-markdown-plugin>=6.0.0
+mkdocs-macros-plugin>=1.0.0
+mkdocs-mermaid2-plugin>=1.1.0
+mkdocs-git-revision-date-localized-plugin>=1.2.0
+mkdocs-git-authors-plugin>=0.7.0
+
+# Code highlighting and syntax
+pygments>=2.16.0
+pymdown-extensions>=10.3.0
+
+# Additional utilities
+mkdocs-minify-plugin>=0.7.0
+mkdocs-redirects>=1.2.0
+mkdocs-exclude>=1.0.2
+
+# API documentation generation
+mkdocstrings>=0.23.0
+mkdocstrings-python>=1.7.0
+
+# PDF generation (optional)
+mkdocs-with-pdf>=0.9.3

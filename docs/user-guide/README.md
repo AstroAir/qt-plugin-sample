@@ -1,30 +1,73 @@
-# QtPlugin User Guide
+# User Guide
 
-This comprehensive user guide covers everything you need to know to use the QtPlugin library in your applications.
-
-## Table of Contents
-
-1. [Quick Start](quick-start.md) - Get started in minutes
-2. [Installation](installation.md) - Installing QtPlugin
-3. [Integration](integration.md) - Integrating into your application
-4. [Configuration](configuration.md) - Plugin configuration and management
-5. [Plugin Management](plugin-management.md) - Loading, unloading, and managing plugins
-6. [Security](security.md) - Plugin security and validation
-7. [Performance](performance.md) - Performance considerations
-8. [Troubleshooting](troubleshooting.md) - Common issues and solutions
+This comprehensive user guide covers everything you need to know to use QtPlugin in your applications.
 
 ## Overview
 
-QtPlugin is a modern, pure C++ plugin system designed for Qt applications. It provides:
+QtPlugin is a modern, pure C++ plugin system designed for Qt applications that provides:
 
-- **Dynamic Plugin Loading**: Load and unload plugins at runtime
-- **Lifecycle Management**: Complete plugin lifecycle control
-- **Dependency Resolution**: Automatic dependency management
-- **Configuration Management**: Flexible plugin configuration
-- **Security Validation**: Plugin security and sandboxing
-- **Performance Monitoring**: Real-time performance tracking
-- **Hot Reloading**: Dynamic plugin reloading
-- **Thread Safety**: Safe concurrent operations
+- **🔌 Dynamic Plugin Loading** - Load and unload plugins at runtime
+- **🔄 Lifecycle Management** - Complete plugin lifecycle control
+- **🔗 Dependency Resolution** - Automatic dependency management
+- **⚙️ Configuration Management** - Flexible plugin configuration
+- **🔒 Security Validation** - Plugin security and sandboxing
+- **📊 Performance Monitoring** - Real-time performance tracking
+- **🔥 Hot Reloading** - Dynamic plugin reloading
+- **🧵 Thread Safety** - Safe concurrent operations
+
+## Table of Contents
+
+<div class="grid cards" markdown>
+
+- :material-rocket-launch:{ .lg .middle } **Getting Started**
+
+    ---
+
+    Quick integration guide and basic usage patterns
+
+    [:octicons-arrow-right-24: Integration Guide](integration.md)
+
+- :material-cog:{ .lg .middle } **Configuration**
+
+    ---
+
+    Plugin configuration, settings, and management
+
+    [:octicons-arrow-right-24: Configuration Guide](configuration.md)
+
+- :material-view-dashboard:{ .lg .middle } **Plugin Management**
+
+    ---
+
+    Loading, unloading, and managing plugin lifecycles
+
+    [:octicons-arrow-right-24: Plugin Management](plugin-management.md)
+
+- :material-shield-check:{ .lg .middle } **Security**
+
+    ---
+
+    Plugin security, validation, and trust management
+
+    [:octicons-arrow-right-24: Security Guide](security.md)
+
+- :material-speedometer:{ .lg .middle } **Performance**
+
+    ---
+
+    Performance optimization and monitoring
+
+    [:octicons-arrow-right-24: Performance Guide](performance.md)
+
+- :material-help-circle:{ .lg .middle } **Troubleshooting**
+
+    ---
+
+    Common issues, solutions, and debugging tips
+
+    [:octicons-arrow-right-24: Troubleshooting](troubleshooting.md)
+
+</div>
 
 ## Key Concepts
 

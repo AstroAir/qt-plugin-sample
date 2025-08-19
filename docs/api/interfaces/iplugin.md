@@ -8,7 +8,19 @@ The `IPlugin` interface is the core interface that all plugins must implement. I
 #include <qtplugin/core/plugin_interface.hpp>
 ```
 
-## Declaration
+## Overview
+
+The `IPlugin` interface serves as the foundation for all plugins in the QtPlugin system. It defines the contract that every plugin must fulfill, ensuring consistent behavior across different plugin types.
+
+### Key Responsibilities
+
+- **Lifecycle Management**: Initialize and shutdown plugin resources
+- **Metadata Provision**: Provide plugin information (name, version, author, etc.)
+- **Command Execution**: Handle plugin-specific commands and operations
+- **Configuration**: Support plugin configuration and validation
+- **State Management**: Track and report plugin state
+
+## Interface Declaration
 
 ```cpp
 namespace qtplugin {

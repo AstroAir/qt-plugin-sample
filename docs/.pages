@@ -1,0 +1,84 @@
+# Main navigation structure for QtPlugin documentation
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/overview.md
+    - getting-started/installation.md
+    - getting-started/quick-start.md
+    - getting-started/first-plugin.md
+  - User Guide:
+    - user-guide/index.md
+    - user-guide/integration.md
+    - user-guide/configuration.md
+    - user-guide/plugin-management.md
+    - user-guide/security.md
+    - user-guide/performance.md
+    - user-guide/troubleshooting.md
+  - Developer Guide:
+    - developer-guide/index.md
+    - developer-guide/plugin-development.md
+    - developer-guide/plugin-architecture.md
+    - developer-guide/advanced-features.md
+    - developer-guide/testing.md
+    - developer-guide/debugging.md
+    - developer-guide/best-practices.md
+  - API Reference:
+    - api/index.md
+    - api/core/index.md
+    - api/interfaces/index.md
+    - api/managers/index.md
+    - api/security/index.md
+    - api/utilities/index.md
+    - api/examples.md
+  - Architecture:
+    - architecture/index.md
+    - architecture/design-principles.md
+    - architecture/plugin-lifecycle.md
+    - architecture/communication.md
+    - architecture/security-model.md
+    - architecture/performance.md
+  - Tutorials:
+    - tutorials/index.md
+    - tutorials/basic-plugin.md
+    - tutorials/service-plugin.md
+    - tutorials/ui-plugin.md
+    - tutorials/network-plugin.md
+    - tutorials/advanced-scenarios.md
+  - Examples:
+    - examples/index.md
+    - examples/basic-examples.md
+    - examples/service-examples.md
+    - examples/ui-examples.md
+    - examples/network-examples.md
+    - examples/real-world-applications.md
+  - Deployment:
+    - deployment/index.md
+    - deployment/building.md
+    - deployment/packaging.md
+    - deployment/cross-platform.md
+    - deployment/distribution.md
+  - Testing:
+    - testing/index.md
+    - testing/unit-testing.md
+    - testing/integration-testing.md
+    - testing/performance-testing.md
+    - testing/security-testing.md
+  - Advanced Topics:
+    - advanced/index.md
+    - advanced/hot-reloading.md
+    - advanced/inter-plugin-communication.md
+    - advanced/custom-interfaces.md
+    - advanced/performance-optimization.md
+    - advanced/security-hardening.md
+  - Contributing:
+    - contributing/index.md
+    - contributing/development-setup.md
+    - contributing/coding-standards.md
+    - contributing/documentation.md
+    - contributing/testing-guidelines.md
+  - Reference:
+    - reference/changelog.md
+    - reference/migration-guide.md
+    - reference/faq.md
+    - reference/glossary.md
+    - reference/resources.md
