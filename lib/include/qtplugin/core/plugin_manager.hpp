@@ -11,6 +11,7 @@
 #include "plugin_registry.hpp"
 #include "plugin_dependency_resolver.hpp"
 #include "../monitoring/plugin_hot_reload_manager.hpp"
+#include "../monitoring/plugin_metrics_collector.hpp"
 #include "../communication/message_bus.hpp"
 #include "../security/security_manager.hpp"
 #include "../managers/configuration_manager.hpp"
@@ -131,6 +132,7 @@ public:
                           std::unique_ptr<IPluginRegistry> plugin_registry = nullptr,
                           std::unique_ptr<IPluginDependencyResolver> dependency_resolver = nullptr,
                           std::unique_ptr<IPluginHotReloadManager> hot_reload_manager = nullptr,
+                          std::unique_ptr<IPluginMetricsCollector> metrics_collector = nullptr,
                           QObject* parent = nullptr);
     
     /**
@@ -547,6 +549,7 @@ private:
     std::unique_ptr<IPluginRegistry> m_plugin_registry;
     std::unique_ptr<IPluginDependencyResolver> m_dependency_resolver;
     std::unique_ptr<IPluginHotReloadManager> m_hot_reload_manager;
+    std::unique_ptr<IPluginMetricsCollector> m_metrics_collector;
     
     // Plugin storage (now handled by PluginRegistry and PluginDependencyResolver)
     // TODO: Remove after refactoring is complete
@@ -563,8 +566,9 @@ private:
     // std::unique_ptr<QFileSystemWatcher> m_file_watcher;
     // std::unordered_map<std::string, std::filesystem::path> m_watched_files;
     
-    // Monitoring
-    std::atomic<bool> m_monitoring_active{false};
+    // Monitoring (now handled by PluginMetricsCollector)
+    // TODO: Remove after refactoring is complete
+    // std::atomic<bool> m_monitoring_active{false};
     std::unique_ptr<QTimer> m_monitoring_timer;
     
     // Security

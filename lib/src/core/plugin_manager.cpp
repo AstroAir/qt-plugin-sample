@@ -9,6 +9,7 @@
 #include "../../include/qtplugin/core/plugin_registry.hpp"
 #include "../../include/qtplugin/core/plugin_dependency_resolver.hpp"
 #include "../../include/qtplugin/monitoring/plugin_hot_reload_manager.hpp"
+#include "../../include/qtplugin/monitoring/plugin_metrics_collector.hpp"
 #include "../../include/qtplugin/core/service_plugin_interface.hpp"
 #include "../../include/qtplugin/communication/message_bus.hpp"
 #include "../../include/qtplugin/security/security_manager.hpp"
@@ -72,6 +73,7 @@ PluginManager::PluginManager(std::unique_ptr<IPluginLoader> loader,
                            std::unique_ptr<IPluginRegistry> plugin_registry,
                            std::unique_ptr<IPluginDependencyResolver> dependency_resolver,
                            std::unique_ptr<IPluginHotReloadManager> hot_reload_manager,
+                           std::unique_ptr<IPluginMetricsCollector> metrics_collector,
                            QObject* parent)
     : QObject(parent)
     , m_loader(loader ? std::move(loader) : PluginLoaderFactory::create_default_loader())
@@ -85,6 +87,7 @@ PluginManager::PluginManager(std::unique_ptr<IPluginLoader> loader,
     , m_plugin_registry(plugin_registry ? std::move(plugin_registry) : std::make_unique<PluginRegistry>(this))
     , m_dependency_resolver(dependency_resolver ? std::move(dependency_resolver) : std::make_unique<PluginDependencyResolver>(this))
     , m_hot_reload_manager(hot_reload_manager ? std::move(hot_reload_manager) : std::make_unique<PluginHotReloadManager>(this))
+    , m_metrics_collector(metrics_collector ? std::move(metrics_collector) : std::make_unique<PluginMetricsCollector>(this))
     , m_monitoring_timer(std::make_unique<QTimer>(this))
 {
     // Set up hot reload callback
@@ -92,7 +95,7 @@ PluginManager::PluginManager(std::unique_ptr<IPluginLoader> loader,
         reload_plugin(plugin_id, true);
     });
 
-    // Connect monitoring timer
+    // Connect monitoring timer (legacy - will be removed)
     connect(m_monitoring_timer.get(), &QTimer::timeout,
             this, &PluginManager::on_monitoring_timer);
 }

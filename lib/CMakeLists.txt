@@ -52,6 +52,7 @@ set(QTPLUGIN_CORE_SOURCES
     src/core/plugin_registry.cpp
     src/core/plugin_dependency_resolver.cpp
     src/monitoring/plugin_hot_reload_manager.cpp
+    src/monitoring/plugin_metrics_collector.cpp
     src/communication/message_bus.cpp
     src/utils/version.cpp
     src/utils/error_handling.cpp
@@ -71,6 +72,7 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/core/plugin_registry.hpp
     include/qtplugin/core/plugin_dependency_resolver.hpp
     include/qtplugin/monitoring/plugin_hot_reload_manager.hpp
+    include/qtplugin/monitoring/plugin_metrics_collector.hpp
     include/qtplugin/core/service_plugin_interface.hpp
     include/qtplugin/communication/message_bus.hpp
     include/qtplugin/communication/message_types.hpp
