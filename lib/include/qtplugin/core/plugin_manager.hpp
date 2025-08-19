@@ -7,26 +7,13 @@
 #pragma once
 
 #include "plugin_interface.hpp"
-#include "plugin_loader.hpp"
-#include "plugin_registry.hpp"
-#include "plugin_dependency_resolver.hpp"
-#include "../monitoring/plugin_hot_reload_manager.hpp"
-#include "../monitoring/plugin_metrics_collector.hpp"
-#include "../communication/message_bus.hpp"
-#include "../security/security_manager.hpp"
-#include "../managers/configuration_manager.hpp"
-#include "../managers/logging_manager.hpp"
-#include "../managers/resource_manager.hpp"
-#include "../managers/resource_lifecycle.hpp"
-#include "../managers/resource_monitor.hpp"
 #include "../utils/error_handling.hpp"
 #include "../utils/concepts.hpp"
 #include <QObject>
 #include <QString>
-#include <QFileSystemWatcher>
-#include <QTimer>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QPluginLoader>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -40,11 +27,16 @@
 #include <chrono>
 #include <functional>
 #include <mutex>
+#include <optional>
 
 namespace qtplugin {
 
 // Forward declarations
 class IPluginLoader;
+class IPluginRegistry;
+class IPluginDependencyResolver;
+class IPluginHotReloadManager;
+class IPluginMetricsCollector;
 class IMessageBus;
 class ISecurityManager;
 class IConfigurationManager;
@@ -52,6 +44,17 @@ class ILoggingManager;
 class IResourceManager;
 class IResourceLifecycleManager;
 class IResourceMonitor;
+
+/**
+ * @brief Security levels for plugin validation
+ */
+enum class SecurityLevel {
+    None = 0,       ///< No security validation
+    Basic = 1,      ///< Basic file and metadata validation
+    Standard = 2,   ///< Standard security checks including signatures
+    Strict = 3,     ///< Strict validation with sandboxing
+    Maximum = 4     ///< Maximum security with full isolation
+};
 
 /**
  * @brief Plugin loading options
