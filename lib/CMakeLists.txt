@@ -62,6 +62,10 @@ set(QTPLUGIN_CORE_SOURCES
     src/security/components/permission_manager.cpp
     src/security/components/security_policy_engine.cpp
     src/managers/configuration_manager.cpp
+    src/managers/components/configuration_storage.cpp
+    src/managers/components/configuration_validator.cpp
+    src/managers/components/configuration_merger.cpp
+    src/managers/components/configuration_watcher.cpp
     src/managers/logging_manager.cpp
     src/managers/resource_manager.cpp
     src/managers/resource_lifecycle.cpp
@@ -89,6 +93,10 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/security/components/security_policy_engine.hpp
     include/qtplugin/managers/configuration_manager.hpp
     include/qtplugin/managers/configuration_manager_impl.hpp
+    include/qtplugin/managers/components/configuration_storage.hpp
+    include/qtplugin/managers/components/configuration_validator.hpp
+    include/qtplugin/managers/components/configuration_merger.hpp
+    include/qtplugin/managers/components/configuration_watcher.hpp
     include/qtplugin/managers/logging_manager.hpp
     include/qtplugin/managers/logging_manager_impl.hpp
     include/qtplugin/managers/resource_manager.hpp
