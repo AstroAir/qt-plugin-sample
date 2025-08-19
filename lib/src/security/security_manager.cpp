@@ -4,7 +4,7 @@
  * @version 3.0.0
  */
 
-#include <qtplugin/security/security_manager.hpp>
+#include "../../include/qtplugin/security/security_manager.hpp"
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QFileInfo>
@@ -23,7 +23,15 @@
 
 namespace qtplugin {
 
-SecurityManager::SecurityManager() = default;
+SecurityManager::SecurityManager()
+    : m_validator(std::make_unique<SecurityValidator>(this))
+    , m_signature_verifier(std::make_unique<SignatureVerifier>(this))
+    , m_permission_manager(std::make_unique<PermissionManager>(this))
+    , m_policy_engine(std::make_unique<SecurityPolicyEngine>(this)) {
+
+    // Configure signature verifier
+    m_signature_verifier->set_signature_verification_enabled(m_signature_verification_enabled);
+}
 
 SecurityManager::~SecurityManager() = default;
 

@@ -7,6 +7,11 @@
 #pragma once
 
 #include "../utils/error_handling.hpp"
+#include "components/security_validator.hpp"
+#include "components/signature_verifier.hpp"
+#include "components/permission_manager.hpp"
+#include "components/security_policy_engine.hpp"
+#include <QObject>
 #include <QJsonObject>
 #include <memory>
 #include <filesystem>
@@ -16,6 +21,8 @@
 #include <unordered_map>
 #include <shared_mutex>
 #include <atomic>
+
+class QJsonObject;
 
 namespace qtplugin {
 
@@ -168,6 +175,12 @@ public:
     bool is_signature_verification_enabled() const noexcept;
 
 private:
+    // Security components
+    std::unique_ptr<ISecurityValidator> m_validator;
+    std::unique_ptr<ISignatureVerifier> m_signature_verifier;
+    std::unique_ptr<IPermissionManager> m_permission_manager;
+    std::unique_ptr<ISecurityPolicyEngine> m_policy_engine;
+
     SecurityLevel m_security_level = SecurityLevel::Basic;
     bool m_signature_verification_enabled = false;
     

@@ -57,6 +57,10 @@ set(QTPLUGIN_CORE_SOURCES
     src/utils/version.cpp
     src/utils/error_handling.cpp
     src/security/security_manager.cpp
+    src/security/components/security_validator.cpp
+    src/security/components/signature_verifier.cpp
+    src/security/components/permission_manager.cpp
+    src/security/components/security_policy_engine.cpp
     src/managers/configuration_manager.cpp
     src/managers/logging_manager.cpp
     src/managers/resource_manager.cpp
@@ -79,6 +83,10 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/utils/version.hpp
     include/qtplugin/utils/error_handling.hpp
     include/qtplugin/security/security_manager.hpp
+    include/qtplugin/security/components/security_validator.hpp
+    include/qtplugin/security/components/signature_verifier.hpp
+    include/qtplugin/security/components/permission_manager.hpp
+    include/qtplugin/security/components/security_policy_engine.hpp
     include/qtplugin/managers/configuration_manager.hpp
     include/qtplugin/managers/configuration_manager_impl.hpp
     include/qtplugin/managers/logging_manager.hpp
