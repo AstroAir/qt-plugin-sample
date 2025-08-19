@@ -8,6 +8,7 @@
 #include "../../include/qtplugin/core/plugin_loader.hpp"
 #include "../../include/qtplugin/core/plugin_registry.hpp"
 #include "../../include/qtplugin/core/plugin_dependency_resolver.hpp"
+#include "../../include/qtplugin/monitoring/plugin_hot_reload_manager.hpp"
 #include "../../include/qtplugin/core/service_plugin_interface.hpp"
 #include "../../include/qtplugin/communication/message_bus.hpp"
 #include "../../include/qtplugin/security/security_manager.hpp"
@@ -70,6 +71,7 @@ PluginManager::PluginManager(std::unique_ptr<IPluginLoader> loader,
                            std::unique_ptr<IResourceMonitor> resource_monitor,
                            std::unique_ptr<IPluginRegistry> plugin_registry,
                            std::unique_ptr<IPluginDependencyResolver> dependency_resolver,
+                           std::unique_ptr<IPluginHotReloadManager> hot_reload_manager,
                            QObject* parent)
     : QObject(parent)
     , m_loader(loader ? std::move(loader) : PluginLoaderFactory::create_default_loader())
@@ -82,13 +84,14 @@ PluginManager::PluginManager(std::unique_ptr<IPluginLoader> loader,
     , m_resource_monitor(resource_monitor ? std::move(resource_monitor) : create_resource_monitor(this))
     , m_plugin_registry(plugin_registry ? std::move(plugin_registry) : std::make_unique<PluginRegistry>(this))
     , m_dependency_resolver(dependency_resolver ? std::move(dependency_resolver) : std::make_unique<PluginDependencyResolver>(this))
-    , m_file_watcher(std::make_unique<QFileSystemWatcher>(this))
+    , m_hot_reload_manager(hot_reload_manager ? std::move(hot_reload_manager) : std::make_unique<PluginHotReloadManager>(this))
     , m_monitoring_timer(std::make_unique<QTimer>(this))
 {
-    // Connect file watcher
-    connect(m_file_watcher.get(), &QFileSystemWatcher::fileChanged,
-            this, &PluginManager::on_file_changed);
-    
+    // Set up hot reload callback
+    m_hot_reload_manager->set_reload_callback([this](const std::string& plugin_id) {
+        reload_plugin(plugin_id, true);
+    });
+
     // Connect monitoring timer
     connect(m_monitoring_timer.get(), &QTimer::timeout,
             this, &PluginManager::on_monitoring_timer);
@@ -175,7 +178,7 @@ PluginManager::load_plugin(const std::filesystem::path& file_path,
     
     // Enable hot reload if requested
     if (options.enable_hot_reload) {
-        enable_hot_reload(plugin_id);
+        m_hot_reload_manager->enable_hot_reload(plugin_id, file_path);
     }
     
     // Store plugin info in registry
@@ -221,7 +224,7 @@ qtplugin::expected<void, PluginError> PluginManager::unload_plugin(std::string_v
     }
     
     // Disable hot reload
-    disable_hot_reload(plugin_id);
+    m_hot_reload_manager->disable_hot_reload(std::string(plugin_id));
     
     // Unload from loader
     auto unload_result = m_loader->unload(plugin_id);
