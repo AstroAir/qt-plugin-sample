@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt6 Test component
-find_package(Qt6 REQUIRED COMPONENTS Test Core Network Sql)
+find_package(Qt6 REQUIRED COMPONENTS Test Core Network Sql Concurrent)
 
 # Enable automatic MOC
 set(CMAKE_AUTOMOC ON)
@@ -207,11 +207,22 @@ if(QTPLUGIN_BUILD_PERFORMANCE_TESTS)
     )
 endif()
 
+# Component-specific test targets
+add_custom_target(run_component_tests
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "Component" --verbose
+    DEPENDS
+        test_component_architecture
+        test_manager_component_integration
+    COMMENT "Running QtPlugin component tests"
+)
+
 # Run all tests
 add_custom_target(run_all_tests
     COMMAND ${CMAKE_CTEST_COMMAND} --verbose
     DEPENDS
         test_configuration_manager
+        test_component_architecture
+        test_manager_component_integration
         $<$<BOOL:${QTPLUGIN_BUILD_COMPREHENSIVE_TESTS}>:test_plugin_interface_comprehensive>
         $<$<BOOL:${QTPLUGIN_BUILD_COMPREHENSIVE_TESTS}>:test_plugin_manager_comprehensive>
         $<$<BOOL:${QTPLUGIN_BUILD_COMPREHENSIVE_TESTS}>:test_expected_comprehensive>
@@ -256,6 +267,56 @@ set_tests_properties(ResourceManagementTests PROPERTIES
 # Install test executable (optional)
 install(TARGETS test_resource_management
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
+)
+
+# Component Architecture Tests
+add_executable(test_component_architecture
+    test_component_architecture.cpp
+)
+
+target_include_directories(test_component_architecture PRIVATE
+    ${CMAKE_SOURCE_DIR}/lib/include
+)
+
+target_link_libraries(test_component_architecture PRIVATE
+    Qt6::Test
+    Qt6::Core
+    Qt6::Concurrent
+    QtPluginCore
+)
+
+# Add test to CTest
+add_test(NAME ComponentArchitectureTests COMMAND test_component_architecture)
+
+# Set test properties
+set_tests_properties(ComponentArchitectureTests PROPERTIES
+    TIMEOUT 180
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Manager-Component Integration Tests
+add_executable(test_manager_component_integration
+    test_manager_component_integration.cpp
+)
+
+target_include_directories(test_manager_component_integration PRIVATE
+    ${CMAKE_SOURCE_DIR}/lib/include
+)
+
+target_link_libraries(test_manager_component_integration PRIVATE
+    Qt6::Test
+    Qt6::Core
+    Qt6::Concurrent
+    QtPluginCore
+)
+
+# Add test to CTest
+add_test(NAME ManagerComponentIntegrationTests COMMAND test_manager_component_integration)
+
+# Set test properties
+set_tests_properties(ManagerComponentIntegrationTests PROPERTIES
+    TIMEOUT 240
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # Plugin Manager Tests
