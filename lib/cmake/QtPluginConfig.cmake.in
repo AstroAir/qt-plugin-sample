@@ -12,6 +12,7 @@ set(QTPLUGIN_VERSION_PATCH "@PROJECT_VERSION_PATCH@")
 set(QTPLUGIN_NETWORK_FOUND @QTPLUGIN_BUILD_NETWORK@)
 set(QTPLUGIN_UI_FOUND @QTPLUGIN_BUILD_UI@)
 set(QTPLUGIN_SECURITY_FOUND TRUE)  # Always available
+set(QTPLUGIN_COMPONENTS_FOUND TRUE)  # Component architecture always available
 
 # Find Qt6 dependencies
 find_dependency(Qt6 REQUIRED COMPONENTS Core)
@@ -69,6 +70,7 @@ if(QtPlugin_FOUND)
     message(STATUS "Found QtPlugin ${QTPLUGIN_VERSION}")
     message(STATUS "  Core: YES")
     message(STATUS "  Security: YES")
+    message(STATUS "  Components: YES (modular architecture)")
     if(QTPLUGIN_NETWORK_FOUND)
         message(STATUS "  Network: YES")
     else()

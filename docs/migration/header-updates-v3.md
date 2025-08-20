@@ -1,4 +1,4 @@
-# Header Updates and API Changes - QtPlugin v3.0.0
+a# Header Updates and API Changes - QtPlugin v3.0.0
 
 This document describes the header file changes and API updates in QtPlugin v3.0.0, particularly related to the new component-based architecture.
 

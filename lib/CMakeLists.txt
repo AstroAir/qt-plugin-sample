@@ -26,6 +26,8 @@ option(QTPLUGIN_BUILD_NETWORK "Build network plugin support" OFF)
 option(QTPLUGIN_BUILD_UI "Build UI plugin support" OFF)
 option(QTPLUGIN_BUILD_EXAMPLES "Build example plugins" ON)
 option(QTPLUGIN_BUILD_TESTS "Build unit tests" OFF)
+option(QTPLUGIN_BUILD_COMPONENT_TESTS "Build component-specific tests" OFF)
+option(QTPLUGIN_ENABLE_COMPONENT_LOGGING "Enable detailed component logging" OFF)
 
 # Compiler-specific options
 if(MSVC)
@@ -69,7 +71,6 @@ set(QTPLUGIN_CORE_SOURCES
     src/managers/logging_manager.cpp
     src/managers/resource_manager.cpp
     src/managers/resource_lifecycle.cpp
-    src/managers/resource_monitor.cpp
     src/managers/components/resource_pool.cpp
     src/managers/components/resource_allocator.cpp
     src/managers/components/resource_monitor.cpp
@@ -107,8 +108,6 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/managers/resource_pools.hpp
     include/qtplugin/managers/resource_lifecycle.hpp
     include/qtplugin/managers/resource_lifecycle_impl.hpp
-    include/qtplugin/managers/resource_monitor.hpp
-    include/qtplugin/managers/resource_monitor_impl.hpp
     include/qtplugin/managers/components/resource_pool.hpp
     include/qtplugin/managers/components/resource_allocator.hpp
     include/qtplugin/managers/components/resource_monitor.hpp
@@ -156,6 +155,15 @@ endif()
 set_target_properties(QtPluginCore PROPERTIES
     AUTOMOC ON
 )
+
+# Add compile definitions for build options
+if(QTPLUGIN_ENABLE_COMPONENT_LOGGING)
+    target_compile_definitions(QtPluginCore PRIVATE QTPLUGIN_ENABLE_COMPONENT_LOGGING)
+endif()
+
+if(QTPLUGIN_BUILD_COMPONENT_TESTS)
+    target_compile_definitions(QtPluginCore PRIVATE QTPLUGIN_BUILD_COMPONENT_TESTS)
+endif()
 
 # Network plugin support (optional)
 if(QTPLUGIN_BUILD_NETWORK)
@@ -349,6 +357,7 @@ write_basic_package_version_file(
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/QtPluginConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/QtPluginConfigVersion.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/QtPluginComponents.cmake
     DESTINATION ${QTPLUGIN_CMAKE_DIR}
 )
 
@@ -378,9 +387,12 @@ message(STATUS "")
 message(STATUS "QtPlugin Library Configuration:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
 message(STATUS "  C++ standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Component architecture: ENABLED")
 message(STATUS "  Build network support: ${QTPLUGIN_BUILD_NETWORK}")
 message(STATUS "  Build UI support: ${QTPLUGIN_BUILD_UI}")
 message(STATUS "  Build examples: ${QTPLUGIN_BUILD_EXAMPLES}")
 message(STATUS "  Build tests: ${QTPLUGIN_BUILD_TESTS}")
+message(STATUS "  Build component tests: ${QTPLUGIN_BUILD_COMPONENT_TESTS}")
+message(STATUS "  Enable component logging: ${QTPLUGIN_ENABLE_COMPONENT_LOGGING}")
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "")
