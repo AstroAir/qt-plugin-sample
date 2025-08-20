@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 # Project configuration
 project(AdvancedPluginManager
-    VERSION 2.1.0
-    DESCRIPTION "Advanced Plugin Management System"
+    VERSION 3.0.0
+    DESCRIPTION "Advanced Plugin Management System with Component Architecture"
     LANGUAGES CXX
 )
 

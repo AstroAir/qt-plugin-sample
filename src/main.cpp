@@ -20,10 +20,10 @@ int main(int argc, char *argv[])
     
     // **Set application properties**
     app.setApplicationName("Advanced Plugin Manager");
-    app.setApplicationVersion("2.1.0");
+    app.setApplicationVersion("3.0.0");
     app.setOrganizationName("Example Corporation");
     app.setOrganizationDomain("example.com");
-    app.setApplicationDisplayName("Advanced Plugin Manager");
+    app.setApplicationDisplayName("Advanced Plugin Manager v3.0.0 - Component Architecture");
     
     // **Parse command line arguments**
     QCommandLineParser parser;
