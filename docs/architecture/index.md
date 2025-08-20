@@ -1,6 +1,6 @@
 # Architecture Overview
 
-QtPlugin is built on a modular, layered architecture that provides flexibility, security, and performance for plugin-based applications.
+QtPlugin is built on a modular, layered architecture that provides flexibility, security, and performance for plugin-based applications. Version 3.0.0 introduces a revolutionary component architecture that enhances modularity and maintainability.
 
 ## System Architecture
 
@@ -262,6 +262,81 @@ stateDiagram-v2
     Reloading --> Loading: Reload cycle
     Failed --> [*]: Cleanup and exit
 ```
+
+## Component Architecture (v3.0.0)
+
+QtPlugin v3.0.0 introduces a revolutionary modular component architecture that transforms the plugin system from monolithic managers into focused, single-responsibility components.
+
+### Component Categories
+
+```mermaid
+graph TB
+    subgraph "Core Components"
+        PR[PluginRegistry]
+        PDR[PluginDependencyResolver]
+    end
+
+    subgraph "Monitoring Components"
+        PHRM[PluginHotReloadManager]
+        PMC[PluginMetricsCollector]
+    end
+
+    subgraph "Security Components"
+        SV[SecurityValidator]
+        SigV[SignatureVerifier]
+        PM[PermissionManager]
+        SPE[SecurityPolicyEngine]
+    end
+
+    subgraph "Configuration Components"
+        CS[ConfigurationStorage]
+        CV[ConfigurationValidator]
+        CM[ConfigurationMerger]
+        CW[ConfigurationWatcher]
+    end
+
+    subgraph "Resource Components"
+        RP[ResourcePool]
+        RA[ResourceAllocator]
+        RM[ResourceMonitor]
+    end
+
+    subgraph "Managers (Orchestration)"
+        PluginManager
+        SecurityManager
+        ConfigurationManager
+        ResourceManager
+    end
+
+    PluginManager --> PR
+    PluginManager --> PDR
+    PluginManager --> PHRM
+    PluginManager --> PMC
+
+    SecurityManager --> SV
+    SecurityManager --> SigV
+    SecurityManager --> PM
+    SecurityManager --> SPE
+
+    ConfigurationManager --> CS
+    ConfigurationManager --> CV
+    ConfigurationManager --> CM
+    ConfigurationManager --> CW
+
+    ResourceManager --> RP
+    ResourceManager --> RA
+    ResourceManager --> RM
+```
+
+### Component Benefits
+
+- **Enhanced Modularity**: Single-responsibility components
+- **Improved Testability**: Components can be tested in isolation
+- **Better Maintainability**: Smaller, focused code units
+- **Increased Extensibility**: Easy to add new components
+- **Performance Optimization**: Specialized component implementations
+
+For detailed information about the component architecture, see [Component Architecture](component-architecture.md).
 
 ## Design Principles
 

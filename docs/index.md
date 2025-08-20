@@ -1,6 +1,6 @@
 # QtPlugin Documentation
 
-Welcome to the comprehensive documentation for **QtPlugin** - a modern, pure C++ plugin system designed for Qt applications.
+Welcome to the comprehensive documentation for **QtPlugin** - a modern, pure C++ plugin system designed for Qt applications with revolutionary modular component architecture (v3.0.0).
 
 <div class="grid cards" markdown>
 
@@ -58,6 +58,15 @@ QtPlugin is a **production-ready**, **enterprise-grade** C++ plugin system built
 - **Dependency Resolution** - Automatic dependency management between plugins
 - **Security Validation** - Plugin validation and sandboxing capabilities
 - **Performance Monitoring** - Real-time performance tracking and metrics
+
+### :material-puzzle:{ .purple } Component Architecture (v3.0.0)
+
+- **Modular Design** - Focused, single-responsibility components
+- **Enhanced Testability** - Components can be tested in isolation
+- **Flexible Composition** - Mix and match components for custom solutions
+- **Direct Component Access** - Use components directly for advanced scenarios
+- **Custom Implementations** - Replace components with custom implementations
+- **Backward Compatibility** - 100% API preservation for existing code
 
 ### :material-shield-check:{ .blue } Production Ready
 

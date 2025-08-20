@@ -1,6 +1,6 @@
 # Developer Guide
 
-Welcome to the QtPlugin Developer Guide! This comprehensive resource will help you create powerful, production-ready plugins for the QtPlugin system.
+Welcome to the QtPlugin Developer Guide! This comprehensive resource will help you create powerful, production-ready plugins for the QtPlugin system. QtPlugin v3.0.0 introduces a revolutionary modular component architecture for enhanced flexibility and maintainability.
 
 ## Who This Guide Is For
 
@@ -35,6 +35,13 @@ By following this guide, you'll learn to:
 - Create inter-plugin communication
 - Build security-aware plugins
 - Optimize for performance
+
+### 🧩 Component Architecture (v3.0.0)
+
+- Understand the modular component system
+- Use components directly for advanced scenarios
+- Create custom component implementations
+- Leverage component composition patterns
 
 ### 🧪 Quality Assurance
 

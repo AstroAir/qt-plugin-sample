@@ -16,21 +16,47 @@ The QtPlugin API is organized into logical modules:
 
 ### Core Module (`QtPlugin::Core`)
 
-The core module provides essential plugin system functionality:
+The core module provides essential plugin system functionality with a modular component architecture:
 
 - **Plugin Interfaces** - Base and specialized plugin interfaces
 - **Plugin Manager** - Central plugin orchestration and lifecycle management
 - **Plugin Loader** - Low-level plugin loading and unloading
-- **Plugin Registry** - Plugin discovery and metadata management
+- **Plugin Registry** - Plugin discovery and metadata management (component)
+- **Plugin Dependency Resolver** - Dependency resolution and load ordering (component)
+
+#### Core Components (v3.0.0)
+
+- **PluginRegistry** - Centralized plugin storage and lookup management
+- **PluginDependencyResolver** - Dependency graph management and resolution
+
+### Monitoring Module (`QtPlugin::Monitoring`)
+
+The monitoring module provides plugin monitoring and hot reload capabilities:
+
+- **Plugin Hot Reload Manager** - Dynamic plugin reloading (component)
+- **Plugin Metrics Collector** - Performance metrics and monitoring (component)
+
+#### Monitoring Components (v3.0.0)
+
+- **PluginHotReloadManager** - File watching and hot reload functionality
+- **PluginMetricsCollector** - Metrics collection and performance monitoring
 
 ### Security Module (`QtPlugin::Security`)
 
-The security module handles plugin validation and trust management:
+The security module handles plugin validation and trust management with modular components:
 
-- **Security Manager** - Central security policy enforcement
-- **Plugin Validator** - Plugin signature and integrity validation
-- **Trust Manager** - Plugin trust level management
-- **Sandbox Controller** - Plugin execution sandboxing
+- **Security Manager** - Central security policy enforcement and orchestration
+- **Security Validator** - Core file and metadata validation (component)
+- **Signature Verifier** - Digital signature verification (component)
+- **Permission Manager** - Plugin permission and access control (component)
+- **Security Policy Engine** - Policy evaluation and enforcement (component)
+
+#### Security Components (v3.0.0)
+
+- **SecurityValidator** - File integrity and metadata validation
+- **SignatureVerifier** - Digital signature verification and trust chains
+- **PermissionManager** - Access control and permission management
+- **SecurityPolicyEngine** - Security policy evaluation and enforcement
 
 ### Communication Module (`QtPlugin::Communication`)
 
@@ -40,6 +66,38 @@ The communication module enables inter-plugin messaging:
 - **Message Types** - Type-safe message definitions
 - **Event System** - Plugin event broadcasting and handling
 - **RPC System** - Remote procedure call support
+
+### Configuration Module (`QtPlugin::Configuration`)
+
+The configuration module provides comprehensive configuration management with modular components:
+
+- **Configuration Manager** - Central configuration orchestration and management
+- **Configuration Storage** - File I/O and persistence operations (component)
+- **Configuration Validator** - Schema validation and type checking (component)
+- **Configuration Merger** - Configuration merging and inheritance (component)
+- **Configuration Watcher** - File monitoring and change detection (component)
+
+#### Configuration Components (v3.0.0)
+
+- **ConfigurationStorage** - Configuration file I/O and persistence
+- **ConfigurationValidator** - Schema validation and type checking
+- **ConfigurationMerger** - Configuration merging and inheritance
+- **ConfigurationWatcher** - File monitoring and change detection
+
+### Resource Module (`QtPlugin::Resource`)
+
+The resource module handles plugin resource management with modular components:
+
+- **Resource Manager** - Central resource orchestration and management
+- **Resource Pool** - Resource pooling and lifecycle management (component)
+- **Resource Allocator** - Allocation strategies and policies (component)
+- **Resource Monitor** - Usage monitoring and alerting (component)
+
+#### Resource Components (v3.0.0)
+
+- **ResourcePool** - Template-based resource pooling and lifecycle management
+- **ResourceAllocator** - Multi-strategy allocation with quota enforcement
+- **ResourceMonitor** - Real-time monitoring, alerting, and leak detection
 
 ### Utilities Module (`QtPlugin::Utils`)
 
@@ -61,6 +119,26 @@ The utilities module provides helper classes and functions:
 | `LibraryInitializer` | RAII library initialization | `qtplugin/qtplugin.hpp` |
 | `PluginLoader` | Low-level plugin loading | `qtplugin/core/plugin_loader.hpp` |
 | `SecurityManager` | Plugin security validation | `qtplugin/security/security_manager.hpp` |
+
+### Component Classes (v3.0.0)
+
+| Component | Purpose | Header |
+|-----------|---------|--------|
+| `PluginRegistry` | Plugin storage and lookup | `qtplugin/core/plugin_registry.hpp` |
+| `PluginDependencyResolver` | Dependency resolution | `qtplugin/core/plugin_dependency_resolver.hpp` |
+| `PluginHotReloadManager` | Hot reload functionality | `qtplugin/monitoring/plugin_hot_reload_manager.hpp` |
+| `PluginMetricsCollector` | Metrics collection | `qtplugin/monitoring/plugin_metrics_collector.hpp` |
+| `SecurityValidator` | File and metadata validation | `qtplugin/security/components/security_validator.hpp` |
+| `SignatureVerifier` | Digital signature verification | `qtplugin/security/components/signature_verifier.hpp` |
+| `PermissionManager` | Access control | `qtplugin/security/components/permission_manager.hpp` |
+| `SecurityPolicyEngine` | Policy evaluation | `qtplugin/security/components/security_policy_engine.hpp` |
+| `ConfigurationStorage` | Configuration I/O | `qtplugin/managers/components/configuration_storage.hpp` |
+| `ConfigurationValidator` | Schema validation | `qtplugin/managers/components/configuration_validator.hpp` |
+| `ConfigurationMerger` | Configuration merging | `qtplugin/managers/components/configuration_merger.hpp` |
+| `ConfigurationWatcher` | File monitoring | `qtplugin/managers/components/configuration_watcher.hpp` |
+| `ResourcePool` | Resource pooling | `qtplugin/managers/components/resource_pool.hpp` |
+| `ResourceAllocator` | Resource allocation | `qtplugin/managers/components/resource_allocator.hpp` |
+| `ResourceMonitor` | Resource monitoring | `qtplugin/managers/components/resource_monitor.hpp` |
 
 ### Key Enumerations
 
