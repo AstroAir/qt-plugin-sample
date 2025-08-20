@@ -1,22 +1,43 @@
 /**
  * @file qtplugin.hpp
- * @brief Main header for the QtPlugin library
+ * @brief Main header for the QtPlugin library v3.0.0
  * @version 3.0.0
  * @author QtPlugin Development Team
- * 
+ *
  * This is the main header file for the QtPlugin library. Include this file
  * to get access to all core plugin system functionality.
- * 
- * @example
+ *
+ * Version 3.0.0 introduces a new component-based architecture for improved
+ * modularity, testability, and maintainability. The public API remains
+ * backward compatible.
+ *
+ * @example Basic Usage
  * ```cpp
  * #include <qtplugin/qtplugin.hpp>
- * 
+ *
  * int main() {
  *     qtplugin::PluginManager manager;
  *     auto result = manager.load_plugin("path/to/plugin.so");
  *     if (result) {
  *         // Plugin loaded successfully
  *     }
+ *     return 0;
+ * }
+ * ```
+ *
+ * @example Component-Based Usage
+ * ```cpp
+ * #include <qtplugin/qtplugin.hpp>
+ * #include <qtplugin/qtplugin_components.hpp>
+ *
+ * int main() {
+ *     // Create custom plugin system with specific components
+ *     auto manager = qtplugin::PluginSystemBuilder()
+ *         .with_plugin_registry(qtplugin::ComponentFactory::create_plugin_registry())
+ *         .with_security_validator(qtplugin::ComponentFactory::create_security_validator())
+ *         .build();
+ *
+ *     auto result = manager->load_plugin("path/to/plugin.so");
  *     return 0;
  * }
  * ```
@@ -67,6 +88,9 @@
 #include "managers/resource_lifecycle.hpp"
 // #include "managers/resource_monitor.hpp"  // Temporarily disabled due to conflicts
 
+// For advanced component usage, include:
+// #include <qtplugin/components.hpp>
+
 // Utilities
 #include "utils/version.hpp"
 #include "utils/error_handling.hpp"
@@ -74,6 +98,8 @@
 
 // Security (always available)
 #include "security/security_manager.hpp"
+
+
 
 // UI components (if available)
 #ifdef QTPLUGIN_BUILD_UI

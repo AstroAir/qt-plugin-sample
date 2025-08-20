@@ -113,6 +113,7 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/managers/components/resource_allocator.hpp
     include/qtplugin/managers/components/resource_monitor.hpp
     include/qtplugin/qtplugin.hpp
+    include/qtplugin/components.hpp
 )
 
 # Create core library

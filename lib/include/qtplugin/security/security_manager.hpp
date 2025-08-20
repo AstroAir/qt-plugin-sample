@@ -7,10 +7,6 @@
 #pragma once
 
 #include "../utils/error_handling.hpp"
-#include "components/security_validator.hpp"
-#include "components/signature_verifier.hpp"
-#include "components/permission_manager.hpp"
-#include "components/security_policy_engine.hpp"
 #include <QObject>
 #include <QJsonObject>
 #include <memory>
@@ -25,6 +21,12 @@
 class QJsonObject;
 
 namespace qtplugin {
+
+// Forward declarations
+class ISecurityValidator;
+class ISignatureVerifier;
+class IPermissionManager;
+class ISecurityPolicyEngine;
 
 /**
  * @brief Security levels for plugin validation
