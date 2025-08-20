@@ -5,6 +5,15 @@
 #include <QDebug>
 #include <memory>
 #include <vector>
+#include <fstream>
+#include <sstream>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
+#elif defined(__APPLE__)
+#include <mach/mach.h>
+#endif
 #include <chrono>
 
 // Include the plugin system headers
@@ -49,6 +58,7 @@ private:
     // Performance measurement helpers
     void measureExecutionTime(const QString& testName, std::function<void()> testFunction);
     void logPerformanceResult(const QString& testName, qint64 elapsedMs, const QString& details = QString());
+    size_t getCurrentMemoryUsage() const;
 };
 
 void PerformanceTests::initTestCase()
@@ -219,12 +229,25 @@ void PerformanceTests::testConcurrentMessagingPerformance()
 
 void PerformanceTests::testMemoryUsageBaseline()
 {
-    // This is a placeholder for memory usage testing
-    // In a real implementation, you would use platform-specific APIs
-    // to measure memory usage
-    
-    qDebug() << "Memory usage baseline test - placeholder implementation";
-    QVERIFY(true); // Always pass for now
+    // Measure baseline memory usage
+    size_t initial_memory = getCurrentMemoryUsage();
+
+    // Create a minimal plugin manager
+    auto manager = std::make_unique<qtplugin::PluginManager>();
+
+    size_t after_manager = getCurrentMemoryUsage();
+    size_t manager_overhead = after_manager - initial_memory;
+
+    qDebug() << "Memory usage baseline:";
+    qDebug() << "  Initial memory:" << initial_memory << "bytes";
+    qDebug() << "  After PluginManager:" << after_manager << "bytes";
+    qDebug() << "  Manager overhead:" << manager_overhead << "bytes";
+
+    // Manager should use less than 10MB baseline
+    QVERIFY2(manager_overhead < 10 * 1024 * 1024,
+             QString("PluginManager uses too much memory: %1 bytes").arg(manager_overhead).toLocal8Bit());
+
+    logPerformanceResult("Memory Baseline", manager_overhead, "bytes");
 }
 
 void PerformanceTests::testMemoryUsageWithPlugins()
@@ -261,6 +284,40 @@ void PerformanceTests::logPerformanceResult(const QString& testName, qint64 elap
     qDebug() << message;
     
     // You could also write results to a file or database for analysis
+}
+
+size_t PerformanceTests::getCurrentMemoryUsage() const
+{
+#ifdef _WIN32
+    PROCESS_MEMORY_COUNTERS pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+        return pmc.WorkingSetSize;
+    }
+    return 0;
+#elif defined(__linux__)
+    std::ifstream status_file("/proc/self/status");
+    std::string line;
+    while (std::getline(status_file, line)) {
+        if (line.substr(0, 6) == "VmRSS:") {
+            std::istringstream iss(line);
+            std::string key, value, unit;
+            iss >> key >> value >> unit;
+            return std::stoull(value) * 1024; // Convert KB to bytes
+        }
+    }
+    return 0;
+#elif defined(__APPLE__)
+    struct mach_task_basic_info info;
+    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                  (task_info_t)&info, &infoCount) == KERN_SUCCESS) {
+        return info.resident_size;
+    }
+    return 0;
+#else
+    // Fallback: return a reasonable estimate
+    return 1024 * 1024; // 1MB
+#endif
 }
 
 QTEST_MAIN(PerformanceTests)

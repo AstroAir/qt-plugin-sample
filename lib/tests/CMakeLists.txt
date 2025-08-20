@@ -202,7 +202,9 @@ endif()
 if(QTPLUGIN_BUILD_PERFORMANCE_TESTS)
     add_custom_target(run_performance_tests
         COMMAND ${CMAKE_CTEST_COMMAND} -R "Performance" --verbose
-        DEPENDS test_performance
+        DEPENDS
+            test_performance
+            test_component_performance
         COMMENT "Running performance QtPlugin tests"
     )
 endif()
@@ -213,6 +215,7 @@ add_custom_target(run_component_tests
     DEPENDS
         test_component_architecture
         test_manager_component_integration
+        test_component_performance
     COMMENT "Running QtPlugin component tests"
 )
 
@@ -316,6 +319,31 @@ add_test(NAME ManagerComponentIntegrationTests COMMAND test_manager_component_in
 # Set test properties
 set_tests_properties(ManagerComponentIntegrationTests PROPERTIES
     TIMEOUT 240
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Component Performance Tests
+add_executable(test_component_performance
+    test_component_performance.cpp
+)
+
+target_include_directories(test_component_performance PRIVATE
+    ${CMAKE_SOURCE_DIR}/lib/include
+)
+
+target_link_libraries(test_component_performance PRIVATE
+    Qt6::Test
+    Qt6::Core
+    Qt6::Concurrent
+    QtPluginCore
+)
+
+# Add test to CTest
+add_test(NAME ComponentPerformanceTests COMMAND test_component_performance)
+
+# Set test properties
+set_tests_properties(ComponentPerformanceTests PROPERTIES
+    TIMEOUT 600
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
