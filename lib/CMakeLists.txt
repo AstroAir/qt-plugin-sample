@@ -74,6 +74,12 @@ set(QTPLUGIN_CORE_SOURCES
     src/managers/components/resource_pool.cpp
     src/managers/components/resource_allocator.cpp
     src/managers/components/resource_monitor.cpp
+    # Enhanced plugin system sources (v3.1.0)
+    src/communication/plugin_service_contracts.cpp
+    src/core/enhanced_plugin_interface.cpp
+    src/orchestration/plugin_orchestrator.cpp
+    src/composition/plugin_composition.cpp
+    src/transactions/plugin_transaction_manager.cpp
 )
 
 # Core library headers
@@ -113,6 +119,12 @@ set(QTPLUGIN_CORE_HEADERS
     include/qtplugin/managers/components/resource_monitor.hpp
     include/qtplugin/qtplugin.hpp
     include/qtplugin/components.hpp
+    # Enhanced plugin system headers (v3.1.0)
+    include/qtplugin/communication/plugin_service_contracts.hpp
+    include/qtplugin/core/enhanced_plugin_interface.hpp
+    include/qtplugin/orchestration/plugin_orchestrator.hpp
+    include/qtplugin/composition/plugin_composition.hpp
+    include/qtplugin/transactions/plugin_transaction_manager.hpp
 )
 
 # Create core library

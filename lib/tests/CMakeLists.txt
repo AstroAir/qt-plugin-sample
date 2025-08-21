@@ -498,4 +498,52 @@ install(TARGETS test_plugin_interface
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
 )
 
+# Enhanced Plugin System Tests (v3.1.0)
+if(QTPLUGIN_BUILD_COMPREHENSIVE_TESTS)
+    # Service Contracts Tests
+    add_executable(test_service_contracts
+        test_service_contracts.cpp
+    )
+
+    target_include_directories(test_service_contracts PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(test_service_contracts PRIVATE
+        Qt6::Test
+        Qt6::Core
+        QtPluginCore
+    )
+
+    add_test(NAME ServiceContractsTests COMMAND test_service_contracts)
+    set_tests_properties(ServiceContractsTests PROPERTIES
+        TIMEOUT 60
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    # Plugin Orchestration Tests
+    add_executable(test_plugin_orchestration
+        test_plugin_orchestration.cpp
+    )
+
+    target_include_directories(test_plugin_orchestration PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(test_plugin_orchestration PRIVATE
+        Qt6::Test
+        Qt6::Core
+        QtPluginCore
+    )
+
+    add_test(NAME PluginOrchestrationTests COMMAND test_plugin_orchestration)
+    set_tests_properties(PluginOrchestrationTests PROPERTIES
+        TIMEOUT 120
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    install(TARGETS test_service_contracts test_plugin_orchestration
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
+    )
+endif()
 

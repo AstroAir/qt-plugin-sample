@@ -128,6 +128,14 @@ enum class PluginErrorCode {
     ResourceUnavailable,
     AlreadyExists,
     NotImplemented,
+    InvalidState,
+    InvalidConfiguration,
+    DuplicatePlugin,
+    CircularDependency,
+    OperationCancelled,
+    NotSupported,
+    IncompatibleVersion,
+    SystemError,
     
     // Security errors
     SecurityViolation = 400,

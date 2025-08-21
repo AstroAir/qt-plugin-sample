@@ -40,21 +40,32 @@ A comprehensive, modern C++ plugin system for Qt applications featuring pure C++
 - **Resource Management**: Efficient memory and resource management
 - **Cross-Platform**: Supports Windows, macOS, and Linux
 
+### Enhanced Features (v3.1.0) 🆕
+
+- **Plugin Service Contracts**: Formal interface definitions with capability declarations and validation
+- **Plugin Orchestration**: Complex multi-plugin workflows with dependency management and rollback
+- **Plugin Composition**: Aggregation of multiple plugins into unified functional units
+- **Transactional Operations**: Atomic operations across multiple plugins with 2PC support
+- **Enhanced Communication**: Advanced inter-plugin communication patterns beyond basic messaging
+- **Health Monitoring**: Comprehensive plugin health assessment and diagnostics
+
+> 📖 **Detailed Documentation**: See [Enhanced Features Guide](lib/ENHANCED_FEATURES_v3.1.0.md) for comprehensive information about the new enterprise-grade capabilities.
+
 ## 🧪 **Test Results Summary**
 
 **All test suites are passing with 100% success rate:**
 
-| Test Suite | Status | Tests | Coverage |
-|------------|--------|-------|----------|
-| **Basic Functionality** | ✅ PASS | 4/4 | Core system validation |
-| **Version Management** | ✅ PASS | 11/11 | Semantic versioning |
-| **Error Handling** | ✅ PASS | 35/35 | Expected<T,E> patterns |
-| **Plugin Interface** | ✅ PASS | 46/46 | Plugin lifecycle & commands |
-| **Security Manager** | ✅ PASS | 6/6 | Security validation |
-| **Resource Management** | ✅ PASS | 27/27 | Memory & resource pools |
-| **Message Bus** | ✅ PASS | 7/7 | Inter-plugin communication |
-| **Cross-Platform** | ✅ PASS | 31/31 | Platform compatibility |
-| **Performance** | ✅ PASS | 14/14 | Load/execution benchmarks |
+| Test Suite              | Status  | Tests | Coverage                    |
+| ----------------------- | ------- | ----- | --------------------------- |
+| **Basic Functionality** | ✅ PASS | 4/4   | Core system validation      |
+| **Version Management**  | ✅ PASS | 11/11 | Semantic versioning         |
+| **Error Handling**      | ✅ PASS | 35/35 | Expected<T,E> patterns      |
+| **Plugin Interface**    | ✅ PASS | 46/46 | Plugin lifecycle & commands |
+| **Security Manager**    | ✅ PASS | 6/6   | Security validation         |
+| **Resource Management** | ✅ PASS | 27/27 | Memory & resource pools     |
+| **Message Bus**         | ✅ PASS | 7/7   | Inter-plugin communication  |
+| **Cross-Platform**      | ✅ PASS | 31/31 | Platform compatibility      |
+| **Performance**         | ✅ PASS | 14/14 | Load/execution benchmarks   |
 
 **Total: 181 tests passed, 0 failed** 🎉
 
@@ -340,6 +351,7 @@ enum class PluginCapability : uint32_t {
 #### Verified Functionality: ✅ ALL 181 TESTS PASS
 
 **Core System Tests (100% Pass Rate)**:
+
 - ✅ **Version Management**: 11/11 tests - Semantic versioning system
 - ✅ **Error Handling**: 35/35 tests - Custom expected<T,E> implementation
 - ✅ **Plugin Interface**: 46/46 tests - Complete lifecycle management
@@ -351,6 +363,7 @@ enum class PluginCapability : uint32_t {
 - ✅ **Basic Functionality**: 4/4 tests - Core system validation
 
 **Runtime Verification**:
+
 - ✅ **Library Loading**: All libraries load without errors
 - ✅ **Plugin Loading**: Dynamic plugin loading verified
 - ✅ **Command Execution**: Plugin commands execute successfully
