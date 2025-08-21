@@ -43,56 +43,56 @@ struct PooledResource {
 };
 
 /**
- * @brief Interface for resource pooling and management
- * 
+ * @brief Interface for component resource pooling and management
+ *
  * The resource pool handles resource allocation, deallocation, reuse,
  * and lifecycle management for specific resource types.
  */
-class IResourcePool {
+class IComponentResourcePool {
 public:
-    virtual ~IResourcePool() = default;
-    
+    virtual ~IComponentResourcePool() = default;
+
     /**
      * @brief Get pool name
      * @return Pool name
      */
     virtual std::string name() const = 0;
-    
+
     /**
      * @brief Get resource type handled by this pool
      * @return Resource type
      */
     virtual ResourceType resource_type() const = 0;
-    
+
     /**
      * @brief Set resource quota for the pool
      * @param quota Resource quota configuration
      */
     virtual void set_quota(const ResourceQuota& quota) = 0;
-    
+
     /**
      * @brief Get current quota configuration
      * @return Current quota
      */
     virtual ResourceQuota get_quota() const = 0;
-    
+
     /**
      * @brief Get pool statistics
      * @return Usage statistics
      */
     virtual ResourceUsageStats get_statistics() const = 0;
-    
+
     /**
      * @brief Cleanup expired or unused resources
      * @return Number of resources cleaned up
      */
     virtual size_t cleanup_resources() = 0;
-    
+
     /**
      * @brief Clear all resources from pool
      */
     virtual void clear() = 0;
-    
+
     /**
      * @brief Check if pool can allocate resource
      * @param plugin_id Plugin requesting resource
@@ -100,13 +100,13 @@ public:
      * @return true if allocation is possible
      */
     virtual bool can_allocate(std::string_view plugin_id, ResourcePriority priority) const = 0;
-    
+
     /**
      * @brief Get number of available resources
      * @return Number of available resources
      */
     virtual size_t available_count() const = 0;
-    
+
     /**
      * @brief Get number of active resources
      * @return Number of active resources
@@ -118,7 +118,7 @@ public:
  * @brief Template interface for typed resource pools
  */
 template<typename T>
-class ITypedResourcePool : public IResourcePool {
+class ITypedComponentResourcePool : public IComponentResourcePool {
 public:
     /**
      * @brief Acquire resource from pool
@@ -128,7 +128,7 @@ public:
      */
     virtual qtplugin::expected<std::pair<ResourceHandle, std::unique_ptr<T>>, PluginError>
     acquire_resource(std::string_view plugin_id, ResourcePriority priority = ResourcePriority::Normal) = 0;
-    
+
     /**
      * @brief Release resource back to pool
      * @param handle Resource handle
@@ -137,7 +137,7 @@ public:
      */
     virtual qtplugin::expected<void, PluginError>
     release_resource(const ResourceHandle& handle, std::unique_ptr<T> resource) = 0;
-    
+
     /**
      * @brief Set resource factory for creating new instances
      * @param factory Factory function
@@ -146,20 +146,59 @@ public:
 };
 
 /**
+ * @brief Base class for resource pools with Qt functionality
+ *
+ * Non-template base class that provides Qt signals/slots functionality
+ * for resource pools. Template classes cannot use Q_OBJECT directly.
+ */
+class ResourcePoolBase : public QObject {
+    Q_OBJECT
+
+public:
+    explicit ResourcePoolBase(QObject* parent = nullptr);
+    virtual ~ResourcePoolBase() = default;
+
+signals:
+    /**
+     * @brief Emitted when resource is acquired
+     * @param handle Resource handle
+     * @param plugin_id Plugin that acquired the resource
+     */
+    void resource_acquired(const QString& handle, const QString& plugin_id);
+
+    /**
+     * @brief Emitted when resource is released
+     * @param handle Resource handle
+     * @param plugin_id Plugin that released the resource
+     */
+    void resource_released(const QString& handle, const QString& plugin_id);
+
+    /**
+     * @brief Emitted when quota is exceeded
+     * @param plugin_id Plugin that triggered quota exceeded
+     */
+    void quota_exceeded(const QString& plugin_id);
+
+    /**
+     * @brief Emitted when resources are cleaned up
+     * @param count Number of resources cleaned up
+     */
+    void resources_cleaned_up(int count);
+};
+
+/**
  * @brief Generic resource pool implementation
- * 
+ *
  * Provides resource pooling with configurable quotas, automatic cleanup,
  * and resource reuse strategies.
  */
 template<typename T>
-class ResourcePool : public QObject, public ITypedResourcePool<T> {
-    Q_OBJECT
-    
+class ResourcePool : public ResourcePoolBase, public ITypedComponentResourcePool<T> {
 public:
     explicit ResourcePool(const std::string& name, ResourceType type, QObject* parent = nullptr);
     ~ResourcePool() override;
-    
-    // IResourcePool interface
+
+    // IComponentResourcePool interface
     std::string name() const override;
     ResourceType resource_type() const override;
     void set_quota(const ResourceQuota& quota) override;
@@ -170,42 +209,15 @@ public:
     bool can_allocate(std::string_view plugin_id, ResourcePriority priority) const override;
     size_t available_count() const override;
     size_t active_count() const override;
-    
-    // ITypedResourcePool interface
+
+    // ITypedComponentResourcePool interface
     qtplugin::expected<std::pair<ResourceHandle, std::unique_ptr<T>>, PluginError>
     acquire_resource(std::string_view plugin_id, ResourcePriority priority = ResourcePriority::Normal) override;
-    
+
     qtplugin::expected<void, PluginError>
     release_resource(const ResourceHandle& handle, std::unique_ptr<T> resource) override;
-    
-    void set_factory(std::function<std::unique_ptr<T>()> factory) override;
 
-signals:
-    /**
-     * @brief Emitted when resource is acquired
-     * @param handle Resource handle
-     * @param plugin_id Plugin that acquired the resource
-     */
-    void resource_acquired(const QString& handle, const QString& plugin_id);
-    
-    /**
-     * @brief Emitted when resource is released
-     * @param handle Resource handle
-     * @param plugin_id Plugin that released the resource
-     */
-    void resource_released(const QString& handle, const QString& plugin_id);
-    
-    /**
-     * @brief Emitted when quota is exceeded
-     * @param plugin_id Plugin that triggered quota exceeded
-     */
-    void quota_exceeded(const QString& plugin_id);
-    
-    /**
-     * @brief Emitted when resources are cleaned up
-     * @param count Number of resources cleaned up
-     */
-    void resources_cleaned_up(int count);
+    void set_factory(std::function<std::unique_ptr<T>()> factory) override;
 
 private:
     std::string m_name;

@@ -26,11 +26,11 @@ PluginRegistry::~PluginRegistry() {
 qtplugin::expected<void, PluginError> 
 PluginRegistry::register_plugin(const std::string& plugin_id, std::unique_ptr<PluginInfo> plugin_info) {
     if (plugin_id.empty()) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin ID cannot be empty");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin ID cannot be empty");
     }
     
     if (!plugin_info) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin info cannot be null");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin info cannot be null");
     }
     
     std::unique_lock lock(m_plugins_mutex);
@@ -54,7 +54,7 @@ PluginRegistry::register_plugin(const std::string& plugin_id, std::unique_ptr<Pl
 qtplugin::expected<void, PluginError> 
 PluginRegistry::unregister_plugin(const std::string& plugin_id) {
     if (plugin_id.empty()) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin ID cannot be empty");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin ID cannot be empty");
     }
     
     std::unique_lock lock(m_plugins_mutex);
@@ -148,7 +148,7 @@ void PluginRegistry::clear() {
 qtplugin::expected<void, PluginError>
 PluginRegistry::update_plugin_info(const std::string& plugin_id, const PluginInfo& plugin_info) {
     if (plugin_id.empty()) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin ID cannot be empty");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin ID cannot be empty");
     }
     
     std::unique_lock lock(m_plugins_mutex);

@@ -9,6 +9,7 @@
 #include <QLoggingCategory>
 #include <QDebug>
 #include <algorithm>
+#include <mutex>
 
 Q_LOGGING_CATEGORY(permissionManagerLog, "qtplugin.security.permissions")
 
@@ -75,7 +76,7 @@ bool PermissionManager::has_permission(const std::string& plugin_id, PluginPermi
 qtplugin::expected<void, PluginError> 
 PermissionManager::grant_permission(const std::string& plugin_id, PluginPermission permission) {
     if (plugin_id.empty()) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin ID cannot be empty");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin ID cannot be empty");
     }
     
     std::unique_lock lock(m_permissions_mutex);

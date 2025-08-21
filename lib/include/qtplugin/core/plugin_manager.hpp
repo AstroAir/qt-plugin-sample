@@ -7,6 +7,9 @@
 #pragma once
 
 #include "plugin_interface.hpp"
+#include "plugin_loader.hpp"
+#include "plugin_dependency_resolver.hpp"
+#include "../security/security_manager.hpp"
 #include "../utils/error_handling.hpp"
 #include "../utils/concepts.hpp"
 #include <QObject>
@@ -14,6 +17,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QPluginLoader>
+#include <QTimer>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -45,16 +49,7 @@ class IResourceManager;
 class IResourceLifecycleManager;
 class IResourceMonitor;
 
-/**
- * @brief Security levels for plugin validation
- */
-enum class SecurityLevel {
-    None = 0,       ///< No security validation
-    Basic = 1,      ///< Basic file and metadata validation
-    Standard = 2,   ///< Standard security checks including signatures
-    Strict = 3,     ///< Strict validation with sandboxing
-    Maximum = 4     ///< Maximum security with full isolation
-};
+
 
 /**
  * @brief Plugin loading options
@@ -92,15 +87,7 @@ struct PluginInfo {
     QJsonObject to_json() const;
 };
 
-/**
- * @brief Plugin dependency graph node
- */
-struct DependencyNode {
-    std::string plugin_id;
-    std::unordered_set<std::string> dependencies;
-    std::unordered_set<std::string> dependents;
-    int load_order = 0;
-};
+
 
 /**
  * @brief Enhanced plugin manager
@@ -556,9 +543,9 @@ private:
     
     // Plugin storage (now handled by PluginRegistry and PluginDependencyResolver)
     // TODO: Remove after refactoring is complete
-    // mutable std::shared_mutex m_plugins_mutex;
-    // std::unordered_map<std::string, std::unique_ptr<PluginInfo>> m_plugins;
-    // std::unordered_map<std::string, DependencyNode> m_dependency_graph;
+    mutable std::shared_mutex m_plugins_mutex;
+    std::unordered_map<std::string, std::unique_ptr<PluginInfo>> m_plugins;
+    std::unordered_map<std::string, DependencyNode> m_dependency_graph;
     
     // Search paths
     mutable std::shared_mutex m_search_paths_mutex;
@@ -571,7 +558,7 @@ private:
     
     // Monitoring (now handled by PluginMetricsCollector)
     // TODO: Remove after refactoring is complete
-    // std::atomic<bool> m_monitoring_active{false};
+    std::atomic<bool> m_monitoring_active{false};
     std::unique_ptr<QTimer> m_monitoring_timer;
     
     // Security

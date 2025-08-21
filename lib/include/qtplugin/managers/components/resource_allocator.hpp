@@ -26,7 +26,7 @@ enum class ResourcePriority;
 struct ResourceQuota;
 struct ResourceUsageStats;
 struct ResourceHandle;
-class IResourcePool;
+class IComponentResourcePool;
 
 /**
  * @brief Resource allocation strategy
@@ -82,7 +82,7 @@ public:
      * @return Success or error
      */
     virtual qtplugin::expected<void, PluginError>
-    register_pool(std::shared_ptr<IResourcePool> pool) = 0;
+    register_pool(std::shared_ptr<IComponentResourcePool> pool) = 0;
     
     /**
      * @brief Unregister resource pool
@@ -184,7 +184,7 @@ public:
     
     // IResourceAllocator interface
     qtplugin::expected<void, PluginError>
-    register_pool(std::shared_ptr<IResourcePool> pool) override;
+    register_pool(std::shared_ptr<IComponentResourcePool> pool) override;
     
     qtplugin::expected<void, PluginError>
     unregister_pool(std::string_view pool_name) override;
@@ -246,7 +246,7 @@ signals:
 
 private:
     mutable std::shared_mutex m_mutex;
-    std::unordered_map<std::string, std::shared_ptr<IResourcePool>> m_pools;
+    std::unordered_map<std::string, std::shared_ptr<IComponentResourcePool>> m_pools;
     std::unordered_map<ResourceType, std::vector<std::string>> m_pools_by_type;
     std::unordered_map<ResourceType, AllocationPolicy> m_policies;
     std::unordered_map<std::string, AllocationRecord> m_active_allocations;

@@ -17,6 +17,7 @@ The main header now includes only the essential public API headers:
 ```
 
 **What's included:**
+
 - Core plugin interfaces and manager
 - Essential utility classes
 - Security manager
@@ -32,6 +33,7 @@ For advanced users who need direct access to internal components:
 ```
 
 **What's included:**
+
 - All internal component interfaces and implementations
 - Component utility functions
 - Direct access to specialized functionality
@@ -40,38 +42,38 @@ For advanced users who need direct access to internal components:
 
 ### Core Components
 
-| Component | Purpose | Header |
-|-----------|---------|--------|
-| `PluginRegistry` | Plugin storage and lookup | `core/plugin_registry.hpp` |
-| `PluginDependencyResolver` | Dependency resolution | `core/plugin_dependency_resolver.hpp` |
-| `PluginHotReloadManager` | Hot reload functionality | `monitoring/plugin_hot_reload_manager.hpp` |
-| `PluginMetricsCollector` | Metrics collection | `monitoring/plugin_metrics_collector.hpp` |
+| Component                  | Purpose                   | Header                                     |
+| -------------------------- | ------------------------- | ------------------------------------------ |
+| `PluginRegistry`           | Plugin storage and lookup | `core/plugin_registry.hpp`                 |
+| `PluginDependencyResolver` | Dependency resolution     | `core/plugin_dependency_resolver.hpp`      |
+| `PluginHotReloadManager`   | Hot reload functionality  | `monitoring/plugin_hot_reload_manager.hpp` |
+| `PluginMetricsCollector`   | Metrics collection        | `monitoring/plugin_metrics_collector.hpp`  |
 
 ### Security Components
 
-| Component | Purpose | Header |
-|-----------|---------|--------|
-| `SecurityValidator` | Core validation | `security/components/security_validator.hpp` |
-| `SignatureVerifier` | Digital signatures | `security/components/signature_verifier.hpp` |
-| `PermissionManager` | Access control | `security/components/permission_manager.hpp` |
-| `SecurityPolicyEngine` | Policy evaluation | `security/components/security_policy_engine.hpp` |
+| Component              | Purpose            | Header                                           |
+| ---------------------- | ------------------ | ------------------------------------------------ |
+| `SecurityValidator`    | Core validation    | `security/components/security_validator.hpp`     |
+| `SignatureVerifier`    | Digital signatures | `security/components/signature_verifier.hpp`     |
+| `PermissionManager`    | Access control     | `security/components/permission_manager.hpp`     |
+| `SecurityPolicyEngine` | Policy evaluation  | `security/components/security_policy_engine.hpp` |
 
 ### Configuration Components
 
-| Component | Purpose | Header |
-|-----------|---------|--------|
-| `ConfigurationStorage` | File I/O and persistence | `managers/components/configuration_storage.hpp` |
-| `ConfigurationValidator` | Schema validation | `managers/components/configuration_validator.hpp` |
-| `ConfigurationMerger` | Configuration merging | `managers/components/configuration_merger.hpp` |
-| `ConfigurationWatcher` | File monitoring | `managers/components/configuration_watcher.hpp` |
+| Component                | Purpose                  | Header                                            |
+| ------------------------ | ------------------------ | ------------------------------------------------- |
+| `ConfigurationStorage`   | File I/O and persistence | `managers/components/configuration_storage.hpp`   |
+| `ConfigurationValidator` | Schema validation        | `managers/components/configuration_validator.hpp` |
+| `ConfigurationMerger`    | Configuration merging    | `managers/components/configuration_merger.hpp`    |
+| `ConfigurationWatcher`   | File monitoring          | `managers/components/configuration_watcher.hpp`   |
 
 ### Resource Components
 
-| Component | Purpose | Header |
-|-----------|---------|--------|
-| `ResourcePool` | Resource pooling | `managers/components/resource_pool.hpp` |
+| Component           | Purpose               | Header                                       |
+| ------------------- | --------------------- | -------------------------------------------- |
+| `ResourcePool`      | Resource pooling      | `managers/components/resource_pool.hpp`      |
 | `ResourceAllocator` | Allocation strategies | `managers/components/resource_allocator.hpp` |
-| `ResourceMonitor` | Usage monitoring | `managers/components/resource_monitor.hpp` |
+| `ResourceMonitor`   | Usage monitoring      | `managers/components/resource_monitor.hpp`   |
 
 ## Migration Guide
 
@@ -92,12 +94,14 @@ auto result = manager.load_plugin("plugin.so");
 If you were directly accessing internal implementation details, you may need to update your includes:
 
 #### Before (v2.x):
+
 ```cpp
 #include <qtplugin/qtplugin.hpp>
 // Internal details were exposed through main headers
 ```
 
 #### After (v3.0):
+
 ```cpp
 #include <qtplugin/qtplugin.hpp>      // Core functionality
 #include <qtplugin/components.hpp>    // Component access
@@ -122,26 +126,31 @@ auto result = validator->validate_file_integrity(plugin_path);
 ## Benefits of New Architecture
 
 ### 1. **Improved Modularity**
+
 - Each component has a single, well-defined responsibility
 - Components can be tested and maintained independently
 - Easier to understand and modify specific functionality
 
 ### 2. **Better Testability**
+
 - Components can be mocked and tested in isolation
 - Dependency injection support for custom implementations
 - Comprehensive unit testing for each component
 
 ### 3. **Enhanced Extensibility**
+
 - Easy to add new features to specific components
 - Plugin system for components themselves
 - Custom implementations can replace default components
 
 ### 4. **Reduced Coupling**
+
 - Forward declarations minimize header dependencies
 - Clear interfaces between components
 - Reduced compilation times
 
 ### 5. **Thread Safety**
+
 - Each component implements appropriate synchronization
 - Fine-grained locking for better performance
 - Clear ownership and lifecycle management
@@ -149,11 +158,13 @@ auto result = validator->validate_file_integrity(plugin_path);
 ## Backward Compatibility
 
 ### Public API Stability
+
 - All public APIs remain unchanged
 - Existing code continues to work without modification
 - ABI compatibility maintained for shared libraries
 
 ### Deprecated Features
+
 - No features have been deprecated in this release
 - All existing functionality is preserved
 - Performance improvements through better architecture
@@ -161,16 +172,19 @@ auto result = validator->validate_file_integrity(plugin_path);
 ## Performance Improvements
 
 ### Compilation Time
+
 - Reduced header dependencies
 - Forward declarations minimize includes
 - Faster incremental builds
 
 ### Runtime Performance
+
 - More efficient resource management
 - Better memory locality
 - Optimized component interactions
 
 ### Memory Usage
+
 - Reduced memory footprint per component
 - Better resource pooling and reuse
 - Configurable memory limits

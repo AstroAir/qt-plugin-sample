@@ -5,6 +5,10 @@
  */
 
 #include "../../include/qtplugin/security/security_manager.hpp"
+#include "../../include/qtplugin/security/components/security_validator.hpp"
+#include "../../include/qtplugin/security/components/signature_verifier.hpp"
+#include "../../include/qtplugin/security/components/permission_manager.hpp"
+#include "../../include/qtplugin/security/components/security_policy_engine.hpp"
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QFileInfo>
@@ -24,10 +28,10 @@
 namespace qtplugin {
 
 SecurityManager::SecurityManager()
-    : m_validator(std::make_unique<SecurityValidator>(this))
-    , m_signature_verifier(std::make_unique<SignatureVerifier>(this))
-    , m_permission_manager(std::make_unique<PermissionManager>(this))
-    , m_policy_engine(std::make_unique<SecurityPolicyEngine>(this)) {
+    : m_validator(std::make_unique<SecurityValidator>(nullptr))
+    , m_signature_verifier(std::make_unique<SignatureVerifier>(nullptr))
+    , m_permission_manager(std::make_unique<PermissionManager>(nullptr))
+    , m_policy_engine(std::make_unique<SecurityPolicyEngine>(nullptr)) {
 
     // Configure signature verifier
     m_signature_verifier->set_signature_verification_enabled(m_signature_verification_enabled);

@@ -33,7 +33,7 @@ PluginHotReloadManager::~PluginHotReloadManager() {
 qtplugin::expected<void, PluginError> 
 PluginHotReloadManager::enable_hot_reload(const std::string& plugin_id, const std::filesystem::path& file_path) {
     if (plugin_id.empty()) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin ID cannot be empty");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin ID cannot be empty");
     }
     
     if (file_path.empty() || !std::filesystem::exists(file_path)) {

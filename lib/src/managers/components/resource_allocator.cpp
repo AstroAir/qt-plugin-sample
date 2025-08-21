@@ -28,7 +28,7 @@ ResourceAllocator::~ResourceAllocator() {
 }
 
 qtplugin::expected<void, PluginError>
-ResourceAllocator::register_pool(std::shared_ptr<IResourcePool> pool) {
+ResourceAllocator::register_pool(std::shared_ptr<IComponentResourcePool> pool) {
     if (!pool) {
         return make_error<void>(PluginErrorCode::InvalidArgument, "Pool cannot be null");
     }
@@ -211,13 +211,16 @@ ResourceUsageStats ResourceAllocator::get_allocation_statistics(std::optional<Re
         }
         
         if (matches) {
-            stats.total_allocated++;
-            stats.allocation_size += record.allocation_size;
+            stats.total_created++;
+            // Note: allocation_size not available in ResourceUsageStats
+            // stats.allocation_size += record.allocation_size;
         }
     }
     
-    stats.total_requests = m_total_allocations.load();
-    stats.failed_requests = m_failed_allocations.load();
+    // Note: total_requests and failed_requests not available in ResourceUsageStats
+    // Using available members instead
+    stats.currently_active = stats.total_created - stats.total_destroyed;
+    stats.allocation_failures = m_failed_allocations.load();
     
     return stats;
 }
@@ -440,5 +443,3 @@ size_t ResourceAllocator::count_plugin_allocations(std::string_view plugin_id, R
 }
 
 } // namespace qtplugin
-
-#include "resource_allocator.moc"

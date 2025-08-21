@@ -26,7 +26,7 @@ namespace qtplugin {
 enum class ResourceType;
 struct ResourceUsageStats;
 struct ResourceQuota;
-class IResourcePool;
+class IComponentResourcePool;
 class IResourceAllocator;
 
 /**
@@ -161,7 +161,7 @@ public:
      * @brief Register resource pool for monitoring
      * @param pool Resource pool to monitor
      */
-    virtual void register_pool(std::shared_ptr<IResourcePool> pool) = 0;
+    virtual void register_pool(std::shared_ptr<IComponentResourcePool> pool) = 0;
     
     /**
      * @brief Register resource allocator for monitoring
@@ -204,7 +204,7 @@ public:
         std::optional<ResourceType> resource_type = std::nullopt,
         std::string_view plugin_id = {}) const override;
     
-    void register_pool(std::shared_ptr<IResourcePool> pool) override;
+    void register_pool(std::shared_ptr<IComponentResourcePool> pool) override;
     void register_allocator(std::shared_ptr<IResourceAllocator> allocator) override;
 
 signals:
@@ -247,7 +247,7 @@ private:
     std::atomic<bool> m_is_monitoring{false};
     
     mutable std::shared_mutex m_mutex;
-    std::vector<std::shared_ptr<IResourcePool>> m_monitored_pools;
+    std::vector<std::shared_ptr<IComponentResourcePool>> m_monitored_pools;
     std::vector<std::shared_ptr<IResourceAllocator>> m_monitored_allocators;
     std::vector<ResourceSnapshot> m_usage_history;
     std::unordered_map<std::string, ResourceAlert> m_alerts;

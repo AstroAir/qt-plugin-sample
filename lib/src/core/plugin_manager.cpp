@@ -213,7 +213,7 @@ qtplugin::expected<void, PluginError> PluginManager::unload_plugin(std::string_v
         return make_error<void>(PluginErrorCode::LoadFailed, "Plugin not found: " + std::string(plugin_id));
     }
 
-    auto plugin_info = plugin_info_opt.value();
+    const auto& plugin_info = plugin_info_opt.value();
     
     // Check if plugin can be safely unloaded
     if (!force && !m_dependency_resolver->can_unload_safely(std::string(plugin_id))) {

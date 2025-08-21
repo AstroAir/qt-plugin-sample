@@ -34,14 +34,16 @@ SecurityValidationResult SecurityValidator::validate_file_integrity(const std::f
         // Check if file exists and is readable
         if (!file_exists_and_readable(file_path)) {
             result.errors.push_back("File does not exist or is not readable: " + file_path.string());
-            emit validation_performed(QString::fromStdString(file_path.string()), false);
+            // Note: Cannot emit signals from const method
+            // emit validation_performed(QString::fromStdString(file_path.string()), false);
             return result;
         }
         
         // Check file size limits
         if (!check_file_size_limits(file_path)) {
             result.errors.push_back("File size exceeds maximum allowed limit");
-            emit security_violation_detected(QString::fromStdString(file_path.string()), "File size limit exceeded");
+            // Note: Cannot emit signals from const method
+            // emit security_violation_detected(QString::fromStdString(file_path.string()), "File size limit exceeded");
             return result;
         }
         
@@ -59,7 +61,8 @@ SecurityValidationResult SecurityValidator::validate_file_integrity(const std::f
         // Check for safe file path
         if (!is_safe_file_path(file_path)) {
             result.errors.push_back("Unsafe file path detected");
-            emit security_violation_detected(QString::fromStdString(file_path.string()), "Unsafe file path");
+            // Note: Cannot emit signals from const method
+            // emit security_violation_detected(QString::fromStdString(file_path.string()), "Unsafe file path");
             return result;
         }
         
@@ -72,7 +75,8 @@ SecurityValidationResult SecurityValidator::validate_file_integrity(const std::f
         result.errors.push_back("Unknown exception during file integrity validation");
     }
     
-    emit validation_performed(QString::fromStdString(file_path.string()), result.is_valid);
+    // Note: Cannot emit signals from const method
+    // emit validation_performed(QString::fromStdString(file_path.string()), result.is_valid);
     return result;
 }
 

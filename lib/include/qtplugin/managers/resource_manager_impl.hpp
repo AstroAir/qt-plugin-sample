@@ -83,13 +83,13 @@ public:
  * @brief Generic resource pool implementation
  */
 template<typename T>
-class ResourcePool : public IResourcePool<T> {
+class BasicResourcePool : public IResourcePool<T> {
 public:
-    explicit ResourcePool(std::string name, std::unique_ptr<IResourceFactory<T>> factory,
+    explicit BasicResourcePool(std::string name, std::unique_ptr<IResourceFactory<T>> factory,
                          const ResourceQuota& quota = {})
         : m_name(std::move(name)), m_factory(std::move(factory)), m_quota(quota) {}
-    
-    ~ResourcePool() override {
+
+    ~BasicResourcePool() override {
         cleanup_all_resources();
     }
     

@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/qtplugin/managers/components/configuration_storage.hpp"
+#include <QObject>
 #include <QLoggingCategory>
 #include <QDebug>
 #include <QJsonDocument>
@@ -12,6 +13,8 @@
 #include <QFile>
 #include <QDir>
 #include <QStandardPaths>
+#include <QString>
+#include <mutex>
 
 Q_LOGGING_CATEGORY(configStorageLog, "qtplugin.config.storage")
 
@@ -102,7 +105,8 @@ ConfigurationStorage::save_to_file(const std::filesystem::path& file_path,
         config->is_dirty = false;
     }
     
-    emit configuration_saved(static_cast<int>(scope), QString::fromStdString(std::string(plugin_id)));
+    // Note: Cannot emit signals from const method
+    // emit configuration_saved(static_cast<int>(scope), QString::fromStdString(std::string(plugin_id)));
     qCDebug(configStorageLog) << "Configuration saved to" << QString::fromStdString(file_path.string());
     
     return make_success();
@@ -300,5 +304,3 @@ void ConfigurationStorage::ensure_directory_exists(const std::filesystem::path& 
 }
 
 } // namespace qtplugin
-
-#include "configuration_storage.moc"

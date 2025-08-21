@@ -28,7 +28,7 @@ PluginDependencyResolver::~PluginDependencyResolver() {
 qtplugin::expected<void, PluginError> 
 PluginDependencyResolver::update_dependency_graph(IPluginRegistry* plugin_registry) {
     if (!plugin_registry) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin registry cannot be null");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin registry cannot be null");
     }
     
     // Clear existing dependency graph

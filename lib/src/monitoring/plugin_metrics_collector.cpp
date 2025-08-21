@@ -65,7 +65,7 @@ bool PluginMetricsCollector::is_monitoring_active() const {
 qtplugin::expected<void, PluginError> 
 PluginMetricsCollector::update_plugin_metrics(const std::string& plugin_id, IPluginRegistry* plugin_registry) {
     if (!plugin_registry) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Plugin registry cannot be null");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Plugin registry cannot be null");
     }
     
     auto plugin_info_opt = plugin_registry->get_plugin_info(plugin_id);
@@ -73,9 +73,9 @@ PluginMetricsCollector::update_plugin_metrics(const std::string& plugin_id, IPlu
         return make_error<void>(PluginErrorCode::NotFound, "Plugin not found: " + plugin_id);
     }
     
-    auto plugin_info = plugin_info_opt.value();
+    const auto& plugin_info = plugin_info_opt.value();
     if (!plugin_info.instance) {
-        return make_error<void>(PluginErrorCode::InvalidState, "Plugin instance is null");
+        return make_error<void>(PluginErrorCode::StateError, "Plugin instance is null");
     }
     
     // Calculate and update metrics
@@ -129,7 +129,7 @@ QJsonObject PluginMetricsCollector::get_system_metrics(IPluginRegistry* plugin_r
             case PluginState::Running:
                 loaded_plugins++;
                 break;
-            case PluginState::Failed:
+            case PluginState::Error:
                 failed_plugins++;
                 break;
             case PluginState::Unloaded:
@@ -230,7 +230,7 @@ std::string PluginMetricsCollector::plugin_state_to_string(int state) const {
         case PluginState::Running: return "Running";
         case PluginState::Stopping: return "Stopping";
         case PluginState::Stopped: return "Stopped";
-        case PluginState::Failed: return "Failed";
+        case PluginState::Error: return "Error";
         default: return "Unknown";
     }
 }
@@ -243,7 +243,7 @@ QJsonObject PluginMetricsCollector::calculate_plugin_metrics(const std::string& 
         return metrics;
     }
     
-    auto plugin_info = plugin_info_opt.value();
+    const auto& plugin_info = plugin_info_opt.value();
     
     // Update basic metrics
     auto now = std::chrono::system_clock::now();

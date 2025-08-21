@@ -15,12 +15,17 @@ Q_LOGGING_CATEGORY(resourcePoolLog, "qtplugin.resource.pool")
 
 namespace qtplugin {
 
+// ResourcePoolBase implementation
+ResourcePoolBase::ResourcePoolBase(QObject* parent)
+    : QObject(parent) {
+}
+
 template<typename T>
 ResourcePool<T>::ResourcePool(const std::string& name, ResourceType type, QObject* parent)
-    : QObject(parent)
+    : ResourcePoolBase(parent)
     , m_name(name)
     , m_resource_type(type) {
-    
+
     qCDebug(resourcePoolLog) << "Resource pool created:" << QString::fromStdString(name);
 }
 
@@ -58,10 +63,10 @@ ResourceUsageStats ResourcePool<T>::get_statistics() const {
     std::shared_lock lock(m_mutex);
     
     ResourceUsageStats stats;
-    stats.total_allocated = m_active_resources.size();
-    stats.total_available = m_available_resources.size();
-    stats.peak_usage = m_total_acquisitions.load();
-    stats.memory_usage_bytes = calculate_memory_usage();
+    stats.currently_active = m_active_resources.size();
+    stats.total_created = m_total_acquisitions.load();
+    stats.total_destroyed = m_total_releases.load();
+    stats.peak_usage = std::max(stats.currently_active, stats.total_created);
     
     return stats;
 }
@@ -189,11 +194,7 @@ ResourcePool<T>::acquire_resource(std::string_view plugin_id, ResourcePriority p
     
     // Generate handle and move resource out of pool
     std::string handle_str = generate_handle();
-    ResourceHandle handle;
-    handle.id = handle_str;
-    handle.plugin_id = std::string(plugin_id);
-    handle.resource_type = m_resource_type;
-    handle.created_at = pooled_resource->created_at;
+    ResourceHandle handle(handle_str, m_resource_type, std::string(plugin_id));
     
     auto resource = std::move(pooled_resource->resource);
     
@@ -238,9 +239,9 @@ ResourcePool<T>::release_resource(const ResourceHandle& handle, std::unique_ptr<
     m_total_releases.fetch_add(1);
     
     qCDebug(resourcePoolLog) << "Resource released to pool" << QString::fromStdString(m_name)
-                            << "by plugin" << QString::fromStdString(handle.plugin_id);
+                            << "by plugin" << QString::fromStdString(handle.plugin_id());
     
-    emit resource_released(QString::fromStdString(handle.id), QString::fromStdString(handle.plugin_id));
+    emit resource_released(QString::fromStdString(handle.id()), QString::fromStdString(handle.plugin_id()));
     
     return make_success();
 }
@@ -342,5 +343,3 @@ size_t ResourcePool<T>::calculate_memory_usage() const {
 }
 
 } // namespace qtplugin
-
-#include "resource_pool.moc"

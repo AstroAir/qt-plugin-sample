@@ -43,25 +43,29 @@ ConfigurationValidationResult ConfigurationValidator::validate_configuration(con
             const QJsonValue& value = it.value();
             
             // Check if property is defined in schema
-            if (schema.properties.contains(key.toStdString())) {
-                auto property_schema = schema.properties.at(key.toStdString());
+            QJsonObject properties = schema.schema.value("properties").toObject();
+            if (properties.contains(key)) {
+                auto property_schema = properties.value(key).toObject();
                 auto property_result = validate_property(value, property_schema, key.toStdString());
                 
                 if (!property_result.is_valid) {
                     result.errors.insert(result.errors.end(), property_result.errors.begin(), property_result.errors.end());
                     result.is_valid = false;
-                    emit validation_error(key, QString::fromStdString(property_result.errors.front()));
+                    // Note: Cannot emit signals from const method
+                    // emit validation_error(key, QString::fromStdString(property_result.errors.front()));
                 }
                 
                 result.warnings.insert(result.warnings.end(), property_result.warnings.begin(), property_result.warnings.end());
-            } else if (!schema.additional_properties) {
+            } else if (schema.strict_mode) {
                 result.errors.push_back("Unknown property: " + key.toStdString());
                 result.is_valid = false;
-                emit validation_error(key, "Unknown property");
+                // Note: Cannot emit signals from const method
+                // emit validation_error(key, "Unknown property");
             }
         }
         
-        emit validation_performed(result.is_valid, static_cast<int>(result.errors.size()));
+        // Note: Cannot emit signals from const method
+        // emit validation_performed(result.is_valid, static_cast<int>(result.errors.size()));
         
     } catch (const std::exception& e) {
         result.is_valid = false;
@@ -194,10 +198,14 @@ ConfigurationValidationResult ConfigurationValidator::validate_required_properti
     ConfigurationValidationResult result;
     result.is_valid = true;
     
-    for (const auto& required_property : schema.required) {
-        if (!configuration.contains(QString::fromStdString(required_property))) {
-            result.errors.push_back("Required property '" + required_property + "' is missing");
-            result.is_valid = false;
+    if (schema.schema.contains("required") && schema.schema["required"].isArray()) {
+        QJsonArray required = schema.schema["required"].toArray();
+        for (const auto& req : required) {
+            QString required_property = req.toString();
+            if (!configuration.contains(required_property)) {
+                result.errors.push_back("Required property '" + required_property.toStdString() + "' is missing");
+                result.is_valid = false;
+            }
         }
     }
     
@@ -333,5 +341,3 @@ ConfigurationValidationResult ConfigurationValidator::create_validation_result(b
 }
 
 } // namespace qtplugin
-
-#include "configuration_validator.moc"

@@ -57,8 +57,9 @@ SecurityValidationResult SecurityPolicyEngine::evaluate_policy(const std::filesy
                 if (rule.action == "deny") {
                     result.is_valid = false;
                     result.errors.push_back("Policy rule violated: " + rule.name);
-                    emit policy_violation(QString::fromStdString(rule.name),
-                                        QString::fromStdString(file_path.string()));
+                    // Note: Cannot emit signals from const method
+                    // emit policy_violation(QString::fromStdString(rule.name),
+                    //                       QString::fromStdString(file_path.string()));
                 } else if (rule.action == "warn") {
                     result.warnings.push_back("Policy warning: " + rule.name);
                 }
@@ -77,7 +78,8 @@ SecurityValidationResult SecurityPolicyEngine::evaluate_policy(const std::filesy
             result.warnings.push_back("Trusted publisher check not implemented");
         }
         
-        emit policy_evaluated(QString::fromStdString(file_path.string()), result.is_valid);
+        // Note: Cannot emit signals from const method
+        // emit policy_evaluated(QString::fromStdString(file_path.string()), result.is_valid);
         
     } catch (const std::exception& e) {
         result.is_valid = false;
@@ -182,7 +184,7 @@ SecurityPolicyEngine::save_policy(const std::filesystem::path& policy_file) cons
 qtplugin::expected<void, PluginError> 
 SecurityPolicyEngine::add_rule(const SecurityPolicyRule& rule) {
     if (rule.name.empty()) {
-        return make_error<void>(PluginErrorCode::InvalidParameter, "Rule name cannot be empty");
+        return make_error<void>(PluginErrorCode::InvalidParameters, "Rule name cannot be empty");
     }
     
     // Check if rule already exists

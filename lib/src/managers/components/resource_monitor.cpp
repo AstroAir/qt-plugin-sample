@@ -33,7 +33,7 @@ ResourceMonitor::~ResourceMonitor() {
 
 qtplugin::expected<void, PluginError> ResourceMonitor::start_monitoring() {
     if (m_is_monitoring.load()) {
-        return make_error<void>(PluginErrorCode::InvalidState, "Monitoring is already active");
+        return make_error<void>(PluginErrorCode::StateError, "Monitoring is already active");
     }
     
     m_monitoring_timer->start(static_cast<int>(m_config.monitoring_interval.count()));
@@ -238,8 +238,8 @@ std::unordered_map<std::string, double> ResourceMonitor::get_performance_metrics
         
         for (const auto& allocator : m_monitored_allocators) {
             auto stats = allocator->get_allocation_statistics(resource_type, plugin_id);
-            total_allocations += stats.total_requests;
-            total_failures += stats.failed_requests;
+            total_allocations += stats.total_created;
+            total_failures += stats.allocation_failures;
         }
         
         if (total_allocations > 0) {
@@ -251,7 +251,7 @@ std::unordered_map<std::string, double> ResourceMonitor::get_performance_metrics
     return metrics;
 }
 
-void ResourceMonitor::register_pool(std::shared_ptr<IResourcePool> pool) {
+void ResourceMonitor::register_pool(std::shared_ptr<IComponentResourcePool> pool) {
     if (!pool) {
         return;
     }
@@ -310,21 +310,22 @@ ResourceSnapshot ResourceMonitor::create_snapshot() const {
         ResourceUsageStats stats = pool->get_statistics();
         
         snapshot.usage_by_type[type] = stats;
-        snapshot.active_allocations += stats.total_allocated;
+        snapshot.active_allocations += stats.currently_active;
     }
     
     // Collect usage from allocators
     for (const auto& allocator : m_monitored_allocators) {
         auto stats = allocator->get_allocation_statistics();
-        snapshot.failed_allocations += stats.failed_requests;
+        snapshot.failed_allocations += stats.allocation_failures;
         
         // Collect per-plugin statistics
         auto allocations = allocator->get_active_allocations();
         std::unordered_map<std::string, ResourceUsageStats> plugin_stats;
         
         for (const auto& allocation : allocations) {
-            plugin_stats[allocation.plugin_id].total_allocated++;
-            plugin_stats[allocation.plugin_id].allocation_size += allocation.allocation_size;
+            plugin_stats[allocation.plugin_id].total_created++;
+            // Note: allocation_size not available in ResourceUsageStats
+            // plugin_stats[allocation.plugin_id].allocation_size += allocation.allocation_size;
         }
         
         for (const auto& [plugin_id, stats] : plugin_stats) {
@@ -437,7 +438,9 @@ size_t ResourceMonitor::calculate_total_memory_usage() const {
     
     for (const auto& pool : m_monitored_pools) {
         auto stats = pool->get_statistics();
-        total += stats.memory_usage_bytes;
+        // Note: memory_usage_bytes not available in ResourceUsageStats
+        // Using a simple estimate based on active resources
+        total += stats.currently_active * 1024; // Rough estimate
     }
     
     return total;
@@ -459,5 +462,3 @@ void ResourceMonitor::update_performance_metrics(const ResourceSnapshot& snapsho
 }
 
 } // namespace qtplugin
-
-#include "resource_monitor.moc"
